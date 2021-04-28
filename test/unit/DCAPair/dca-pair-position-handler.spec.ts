@@ -251,6 +251,11 @@ describe('DCAPositionHandler', () => {
         const swappedWithFeeApplied = await withFeeApplied(swapped);
         await expect(response).to.emit(DCAPositionHandler, 'Withdrew').withArgs(owner.address, dcaId, tokenB.address, swappedWithFeeApplied);
       });
+
+      then('calculateSwapped returns 0', async () => {
+        const swapped = await DCAPositionHandler.calculateSwapped(dcaId);
+        expect(swapped).to.equal(0);
+      });
     });
   });
 
@@ -383,6 +388,13 @@ describe('DCAPositionHandler', () => {
           lastWithdrawSwap: PERFORMED_SWAPS_10 + 1,
           lastSwap: PERFORMED_SWAPS_10 + POSITION_SWAPS_TO_PERFORM_10,
         });
+      });
+
+      then('calculateSwapped returns 0', async () => {
+        const swapped1 = await DCAPositionHandler.calculateSwapped(dcaId1);
+        const swapped2 = await DCAPositionHandler.calculateSwapped(dcaId2);
+        expect(swapped1).to.equal(0);
+        expect(swapped1).to.equal(0);
       });
 
       then('event is emitted', async () => {

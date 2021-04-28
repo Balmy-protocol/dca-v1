@@ -72,6 +72,7 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
 
     if (_swapped > 0) {
       userPositions[_dcaId].lastWithdrawSwap = performedSwaps;
+      userPositions[_dcaId].swappedBeforeModified = 0;
 
       IERC20Detailed _to = _getTo(_dcaId);
       _to.safeTransfer(msg.sender, _swapped);
@@ -91,6 +92,7 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
         _swappedTokenA += _swappedDCA;
       }
       userPositions[_dcaId].lastWithdrawSwap = performedSwaps;
+      userPositions[_dcaId].swappedBeforeModified = 0;
     }
 
     if (_swappedTokenA > 0 || _swappedTokenB > 0) {
