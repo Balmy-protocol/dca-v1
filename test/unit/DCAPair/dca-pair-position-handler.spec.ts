@@ -394,7 +394,7 @@ describe('DCAPositionHandler', () => {
         const swapped1 = await DCAPositionHandler.calculateSwapped(dcaId1);
         const swapped2 = await DCAPositionHandler.calculateSwapped(dcaId2);
         expect(swapped1).to.equal(0);
-        expect(swapped1).to.equal(0);
+        expect(swapped2).to.equal(0);
       });
 
       then('event is emitted', async () => {
