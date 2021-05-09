@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: Unlicense
+//SPDX-License-Identifier: UNLICENSED
 
 pragma solidity 0.8.4;
 
@@ -20,8 +20,8 @@ interface IGovernable {
 }
 
 abstract contract Governable is IGovernable {
-  address internal _governor;
-  address internal _pendingGovernor;
+  address private _governor;
+  address private _pendingGovernor;
 
   constructor(address __governor) {
     require(__governor != address(0), 'Governable: zero address');
