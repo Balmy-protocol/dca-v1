@@ -29,19 +29,15 @@ describe('CollectableDust', function () {
 
   describe('addProtocolToken', () => {
     when('adding token that is not part of the protocol', () => {
-      let addProtocolTokenTx: TransactionResponse;
       given(async () => {
-        addProtocolTokenTx = collectableDust.addProtocolToken(someToken.address);
-      });
-      then('tx is not reverted', async () => {
-        await expect(addProtocolTokenTx).to.not.be.reverted;
+        await collectableDust.addProtocolToken(someToken.address);
       });
       then('adds token', async () => {
         expect(await collectableDust.containsProtocolToken(someToken.address)).to.be.true;
       });
     });
     when('adding token that is part of the protocol', () => {
-      let addProtocolTokenTx: TransactionResponse;
+      let addProtocolTokenTx: Promise<TransactionResponse>;
       given(async () => {
         await collectableDust.addProtocolToken(someToken.address);
         addProtocolTokenTx = collectableDust.addProtocolToken(someToken.address);
@@ -54,7 +50,7 @@ describe('CollectableDust', function () {
 
   describe('removeProtocolToken', () => {
     when('removing token that is not part of the protocol', () => {
-      let removeProtocolTokenTx: TransactionResponse;
+      let removeProtocolTokenTx: Promise<TransactionResponse>;
       given(async () => {
         removeProtocolTokenTx = collectableDust.removeProtocolToken(someToken.address);
       });
@@ -66,10 +62,7 @@ describe('CollectableDust', function () {
       let removeProtocolTokenTx: TransactionResponse;
       given(async () => {
         await collectableDust.addProtocolToken(someToken.address);
-        removeProtocolTokenTx = collectableDust.removeProtocolToken(someToken.address);
-      });
-      then('tx is not reverted', async () => {
-        await expect(removeProtocolTokenTx).to.not.be.reverted;
+        removeProtocolTokenTx = await collectableDust.removeProtocolToken(someToken.address);
       });
       then('removes token', async () => {
         expect(await collectableDust.containsProtocolToken(someToken.address)).to.be.false;
@@ -79,7 +72,7 @@ describe('CollectableDust', function () {
 
   describe('sendDust', () => {
     when('sending dust to zero', () => {
-      let sendDustTx: TransactionResponse;
+      let sendDustTx: Promise<TransactionResponse>;
       given(async () => {
         sendDustTx = collectableDust.sendDust(constants.ZERO_ADDRESS, someToken.address, utils.parseEther('1'));
       });
@@ -88,7 +81,7 @@ describe('CollectableDust', function () {
       });
     });
     when('token is part of the protocol', () => {
-      let sendDustTx: TransactionResponse;
+      let sendDustTx: Promise<TransactionResponse>;
       beforeEach(async () => {
         await collectableDust.addProtocolToken(someToken.address);
         sendDustTx = collectableDust.sendDust(await wallet.generateRandomAddress(), someToken.address, utils.parseEther('1'));
@@ -107,11 +100,7 @@ describe('CollectableDust', function () {
         await collectableDust.addProtocolToken(someToken.address);
         const forceETHContract = await ethers.getContractFactory('contracts/mocks/ForceETH.sol:ForceETH');
         await forceETHContract.deploy(collectableDust.address, { value: initialDustBalanceOfContract });
-        sendDustTx = collectableDust.sendDust(collectorAddress, await collectableDust.ETH(), collectedDust);
-        await sendDustTx;
-      });
-      then('tx is not reverted', async () => {
-        await expect(sendDustTx).to.not.be.reverted;
+        sendDustTx = await collectableDust.sendDust(collectorAddress, await collectableDust.ETH(), collectedDust);
       });
       then('eth is collected from contract', async () => {
         expect(await ethers.provider.getBalance(collectableDust.address)).to.equal(initialDustBalanceOfContract.sub(collectedDust));
@@ -141,11 +130,7 @@ describe('CollectableDust', function () {
           symbol: 'SOT',
         });
         await someOtherToken.transfer(collectableDust.address, initialDustBalanceOfContract);
-        sendDustTx = collectableDust.sendDust(collectorAddress, someOtherToken.address, collectedDust);
-        await sendDustTx;
-      });
-      then('tx is not reverted', async () => {
-        await expect(sendDustTx).to.not.be.reverted;
+        sendDustTx = await collectableDust.sendDust(collectorAddress, someOtherToken.address, collectedDust);
       });
       then('eth is collected from contract', async () => {
         expect(await someOtherToken.balanceOf(collectableDust.address)).to.equal(initialDustBalanceOfContract.sub(collectedDust));
