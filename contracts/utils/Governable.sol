@@ -28,10 +28,18 @@ abstract contract Governable is IGovernable {
     governor = _governor;
   }
 
+  function setPendingGovernor(address _pendingGovernor) external virtual override onlyGovernor {
+    _setPendingGovernor(_pendingGovernor);
+  }
+
   function _setPendingGovernor(address _pendingGovernor) internal {
     require(_pendingGovernor != address(0), 'Governable: zero address');
     pendingGovernor = _pendingGovernor;
     emit PendingGovernorSet(_pendingGovernor);
+  }
+
+  function acceptPendingGovernor() external virtual override onlyPendingGovernor {
+    _acceptPendingGovernor();
   }
 
   function _acceptPendingGovernor() internal {
