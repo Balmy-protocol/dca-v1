@@ -48,7 +48,7 @@ describe('Governable', function () {
 
   describe('setPendingGovernor', () => {
     when('pending governor is zero address', () => {
-      let setPendingGovernorTx: TransactionResponse;
+      let setPendingGovernorTx: Promise<TransactionResponse>;
       given(async () => {
         setPendingGovernorTx = governable.setPendingGovernor(constants.ZERO_ADDRESS);
       });
@@ -61,11 +61,7 @@ describe('Governable', function () {
       let pendingGovernor: string;
       given(async () => {
         pendingGovernor = await wallet.generateRandomAddress();
-        setPendingGovernorTx = governable.setPendingGovernor(pendingGovernor);
-        await setPendingGovernorTx;
-      });
-      then('tx is not reverted', async () => {
-        await expect(setPendingGovernorTx).to.not.be.reverted;
+        setPendingGovernorTx = await governable.setPendingGovernor(pendingGovernor);
       });
       then('sets pending governor', async () => {
         expect(await governable.pendingGovernor()).to.be.equal(pendingGovernor);
@@ -77,7 +73,7 @@ describe('Governable', function () {
   });
   describe('acceptPendingGovernor', () => {
     when('there is no pending governor', () => {
-      let acceptPendingGovernorTx: TransactionResponse;
+      let acceptPendingGovernorTx: Promise<TransactionResponse>;
       given(async () => {
         acceptPendingGovernorTx = governable.acceptPendingGovernor();
       });
@@ -91,11 +87,7 @@ describe('Governable', function () {
       given(async () => {
         pendingGovernor = await wallet.generateRandomAddress();
         await governable.setPendingGovernor(pendingGovernor);
-        acceptPendingGovernorTx = governable.acceptPendingGovernor();
-        await acceptPendingGovernorTx;
-      });
-      then('tx is not reverted', async () => {
-        await expect(acceptPendingGovernorTx).to.not.be.reverted;
+        acceptPendingGovernorTx = await governable.acceptPendingGovernor();
       });
       then('pending governor becomes governor', async () => {
         expect(await governable.governor()).to.equal(pendingGovernor);
@@ -139,7 +131,7 @@ describe('Governable', function () {
   });
   describe('onlyGovernor', () => {
     when('not called from governor', () => {
-      let onlyGovernorAllowedTx: TransactionResponse;
+      let onlyGovernorAllowedTx: Promise<TransactionResponse>;
       given(async () => {
         const notGovernor = await wallet.generateRandom();
         onlyGovernorAllowedTx = governable.connect(notGovernor).onlyGovernorAllowed({ gasPrice: 0 });
@@ -149,7 +141,7 @@ describe('Governable', function () {
       });
     });
     when('called from governor', () => {
-      let onlyGovernorAllowedTx: TransactionResponse;
+      let onlyGovernorAllowedTx: Promise<TransactionResponse>;
       given(async () => {
         onlyGovernorAllowedTx = governable.connect(governor).onlyGovernorAllowed({ gasPrice: 0 });
       });
@@ -160,7 +152,7 @@ describe('Governable', function () {
   });
   describe('onlyPendingGovernor', () => {
     when('not called from pending governor', () => {
-      let onlyPendingGovernorAllowedTx: TransactionResponse;
+      let onlyPendingGovernorAllowedTx: Promise<TransactionResponse>;
       given(async () => {
         onlyPendingGovernorAllowedTx = governable.connect(governor).onlyPendingGovernorAllowed({ gasPrice: 0 });
       });
@@ -169,7 +161,7 @@ describe('Governable', function () {
       });
     });
     when('called from pending governor', () => {
-      let onlyPendingGovernorAllowedTx: TransactionResponse;
+      let onlyPendingGovernorAllowedTx: Promise<TransactionResponse>;
       given(async () => {
         const pendingGovernor = await wallet.generateRandom();
         await governable.setPendingGovernor(pendingGovernor.address);
