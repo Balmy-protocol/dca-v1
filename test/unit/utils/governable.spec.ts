@@ -6,7 +6,7 @@ import { given, then, when } from '../../utils/bdd';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-describe('Governable', function () {
+describe.only('Governable', function () {
   let governor: SignerWithAddress;
   let governableContract: ContractFactory;
   let governable: Contract;
