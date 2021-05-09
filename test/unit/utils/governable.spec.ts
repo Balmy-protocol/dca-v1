@@ -1,4 +1,4 @@
-import { Contract, ContractFactory } from 'ethers';
+import { Contract, ContractFactory, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 import { TransactionResponse } from '@ethersproject/abstract-provider';
 import { constants, behaviours, wallet, contracts } from '../../utils';
@@ -46,11 +46,11 @@ describe.only('Governable', function () {
     });
   });
 
-  describe('setPendingGovernor', () => {
+  describe('_setPendingGovernor', () => {
     when('pending governor is zero address', () => {
       let setPendingGovernorTx: Promise<TransactionResponse>;
       given(async () => {
-        setPendingGovernorTx = governable.setPendingGovernor(constants.ZERO_ADDRESS);
+        setPendingGovernorTx = governable.setPendingGovernorInternal(constants.ZERO_ADDRESS);
       });
       then('tx is reverted with reason', async () => {
         await expect(setPendingGovernorTx).to.be.revertedWith('Governable: zero address');
@@ -61,7 +61,7 @@ describe.only('Governable', function () {
       let pendingGovernor: string;
       given(async () => {
         pendingGovernor = await wallet.generateRandomAddress();
-        setPendingGovernorTx = await governable.setPendingGovernor(pendingGovernor);
+        setPendingGovernorTx = await governable.setPendingGovernorInternal(pendingGovernor);
       });
       then('sets pending governor', async () => {
         expect(await governable.pendingGovernor()).to.be.equal(pendingGovernor);
@@ -71,11 +71,21 @@ describe.only('Governable', function () {
       });
     });
   });
-  describe('acceptPendingGovernor', () => {
+
+  describe('setPendingGovernor', () => {
+    behaviours.shouldBeExecutableOnlyByGovernor({
+      contract: () => governable,
+      funcAndSignature: 'setPendingGovernor(address)',
+      params: [constants.NOT_ZERO_ADDRESS],
+      governor: () => governor,
+    });
+  });
+
+  describe('_acceptPendingGovernor', () => {
     when('there is no pending governor', () => {
       let acceptPendingGovernorTx: Promise<TransactionResponse>;
       given(async () => {
-        acceptPendingGovernorTx = governable.acceptPendingGovernor();
+        acceptPendingGovernorTx = governable.acceptPendingGovernorInternal();
       });
       then('tx is reverted with reason', async () => {
         await expect(acceptPendingGovernorTx).to.be.revertedWith('Governable: no pending governor');
@@ -87,7 +97,7 @@ describe.only('Governable', function () {
       given(async () => {
         pendingGovernor = await wallet.generateRandomAddress();
         await governable.setPendingGovernor(pendingGovernor);
-        acceptPendingGovernorTx = await governable.acceptPendingGovernor();
+        acceptPendingGovernorTx = await governable.acceptPendingGovernorInternal();
       });
       then('pending governor becomes governor', async () => {
         expect(await governable.governor()).to.equal(pendingGovernor);
@@ -100,6 +110,15 @@ describe.only('Governable', function () {
       });
     });
   });
+
+  describe('acceptPendingGovernor', () => {
+    behaviours.shouldBeExecutableOnlyByPendingGovernor({
+      contract: () => governable,
+      funcAndSignature: 'acceptPendingGovernor()',
+      governor: () => governor,
+    });
+  });
+
   describe('isGovernor', () => {
     when('not querying for governor address', () => {
       then('returns false', async () => {
@@ -129,47 +148,19 @@ describe.only('Governable', function () {
       });
     });
   });
+
   describe('onlyGovernor', () => {
-    when('not called from governor', () => {
-      let onlyGovernorAllowedTx: Promise<TransactionResponse>;
-      given(async () => {
-        const notGovernor = await wallet.generateRandom();
-        onlyGovernorAllowedTx = governable.connect(notGovernor).onlyGovernorAllowed({ gasPrice: 0 });
-      });
-      then('tx is reverted with reason', async () => {
-        await expect(onlyGovernorAllowedTx).to.be.revertedWith('Governable: only governor');
-      });
-    });
-    when('called from governor', () => {
-      let onlyGovernorAllowedTx: Promise<TransactionResponse>;
-      given(async () => {
-        onlyGovernorAllowedTx = governable.connect(governor).onlyGovernorAllowed({ gasPrice: 0 });
-      });
-      then('tx is not reverted', async () => {
-        await expect(onlyGovernorAllowedTx).to.not.be.reverted;
-      });
+    behaviours.shouldBeExecutableOnlyByGovernor({
+      contract: () => governable,
+      funcAndSignature: 'onlyGovernorAllowed()',
+      governor: () => governor,
     });
   });
   describe('onlyPendingGovernor', () => {
-    when('not called from pending governor', () => {
-      let onlyPendingGovernorAllowedTx: Promise<TransactionResponse>;
-      given(async () => {
-        onlyPendingGovernorAllowedTx = governable.connect(governor).onlyPendingGovernorAllowed({ gasPrice: 0 });
-      });
-      then('tx is reverted with reason', async () => {
-        await expect(onlyPendingGovernorAllowedTx).to.be.revertedWith('Governable: only pending governor');
-      });
-    });
-    when('called from pending governor', () => {
-      let onlyPendingGovernorAllowedTx: Promise<TransactionResponse>;
-      given(async () => {
-        const pendingGovernor = await wallet.generateRandom();
-        await governable.setPendingGovernor(pendingGovernor.address);
-        onlyPendingGovernorAllowedTx = governable.connect(pendingGovernor).onlyPendingGovernorAllowed({ gasPrice: 0 });
-      });
-      then('tx is not reverted', async () => {
-        await expect(onlyPendingGovernorAllowedTx).to.not.be.reverted;
-      });
+    behaviours.shouldBeExecutableOnlyByPendingGovernor({
+      contract: () => governable,
+      funcAndSignature: 'onlyPendingGovernorAllowed()',
+      governor: () => governor,
     });
   });
 });

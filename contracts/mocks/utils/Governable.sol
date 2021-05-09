@@ -11,11 +11,11 @@ contract GovernableMock is Governable {
 
   function onlyPendingGovernorAllowed() external onlyPendingGovernor {}
 
-  function setPendingGovernor(address _pendingGovernor) external override {
+  function setPendingGovernorInternal(address _pendingGovernor) external {
     _setPendingGovernor(_pendingGovernor);
   }
 
-  function acceptPendingGovernor() external override {
+  function acceptPendingGovernorInternal() external {
     _acceptPendingGovernor();
   }
 }
