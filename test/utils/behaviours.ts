@@ -13,7 +13,6 @@ chai.use(chaiAsPromised);
 const checkTxRevertedWithMessage = async ({ tx, message }: { tx: Promise<TransactionResponse>; message: RegExp | string }): Promise<void> => {
   await expect(tx).to.be.reverted;
   if (message instanceof RegExp) {
-    // console.log(await tx);
     await expect(tx).eventually.rejected.have.property('message').match(message);
   } else {
     await expect(tx).to.be.revertedWith(message);
