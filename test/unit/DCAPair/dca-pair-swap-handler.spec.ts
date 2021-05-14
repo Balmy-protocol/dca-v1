@@ -486,7 +486,7 @@ describe('DCAPairSwapHandler', () => {
         bn.expectToEqualWithThreshold({
           value: nextSwapInfo.ratePerUnitBToA,
           to: ratePerUnitBToA,
-          threshold: BigNumber.from('1'),
+          threshold: threshold!,
         });
       });
       then('rate of unit a to b is correct', () => {
@@ -926,9 +926,9 @@ describe('DCAPairSwapHandler', () => {
         initialSwapperTokenBBalance = await tokenB.balanceOf(owner.address);
         initialLastSwapPerformed = await DCAPairSwapHandler.lastSwapPerformed();
         if (tokenToBeProvidedBySwapper() === tokenA.address) {
-          await tokenA.approve(DCAPairSwapHandler.address, (amountToBeProvidedBySwapper as BigNumber).add(1)); // 1 wei for threshold
+          await tokenA.approve(DCAPairSwapHandler.address, (amountToBeProvidedBySwapper as BigNumber).add(threshold!));
         } else {
-          await tokenB.approve(DCAPairSwapHandler.address, (amountToBeProvidedBySwapper as BigNumber).add(1)); // 1 wei for threshold
+          await tokenB.approve(DCAPairSwapHandler.address, (amountToBeProvidedBySwapper as BigNumber).add(threshold!));
         }
         swapTx = DCAPairSwapHandler.swap();
       });
