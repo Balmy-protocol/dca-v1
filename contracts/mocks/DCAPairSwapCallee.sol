@@ -14,6 +14,8 @@ contract DCAPairSwapCalleeMock is IDCAPairSwapCallee {
     bytes data;
   }
 
+  // solhint-disable-next-line var-name-mixedcase
+  uint256 private _INITIAL_BALANCE = 2 * 10**18;
   SwapCall private _lastCall;
   bool private _willProvideTokens = true;
 
@@ -26,6 +28,8 @@ contract DCAPairSwapCalleeMock is IDCAPairSwapCallee {
     uint256 _amountToProvide,
     bytes calldata _data
   ) public override {
+    require(_rewardToken.balanceOf(address(this)) == _INITIAL_BALANCE + _rewardAmount, 'DCAPairSwapCallee: reward not sent optimistically');
+
     _lastCall = SwapCall(msg.sender, _sender, _rewardToken, _rewardAmount, _tokenToProvide, _amountToProvide, _data);
 
     if (_willProvideTokens) {

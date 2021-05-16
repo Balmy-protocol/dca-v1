@@ -418,6 +418,7 @@ describe('DCAPairSwapHandler', () => {
     await setOracleData({
       ratePerUnitBToA,
     });
+    return calculateSwapDetails(ratePerUnitBToA, amountToSwapOfTokenB, amountToSwapOfTokenA);
   };
 
   type NextSwapInfo = {
@@ -883,25 +884,92 @@ describe('DCAPairSwapHandler', () => {
   });
 
   describe('flash swap', () => {
+    const BYTES = ethers.utils.randomBytes(5);
+    const [CALLEE_TOKEN_A_INITIAL_BALANCE, CALLEE_TOKEN_B_INITIAL_BALANCE] = [utils.parseEther('2'), utils.parseEther('2')];
+    const [PAIR_TOKEN_A_INITIAL_BALANCE, PAIR_TOKEN_B_INITIAL_BALANCE] = [utils.parseEther('2'), utils.parseEther('2')];
     let DCAPairSwapCallee: Contract;
+    let amountToBeProvidedBySwapper: BigNumber, amountToRewardSwapperWith: BigNumber, tokenAFee: BigNumber, tokenBFee: BigNumber;
 
     given(async () => {
       const DCAPairSwapCalleeContract = await ethers.getContractFactory('contracts/mocks/DCAPairSwapCallee.sol:DCAPairSwapCalleeMock');
       DCAPairSwapCallee = await DCAPairSwapCalleeContract.deploy();
+      await tokenA.mint(DCAPairSwapCallee.address, CALLEE_TOKEN_A_INITIAL_BALANCE);
+      await tokenB.mint(DCAPairSwapCallee.address, CALLEE_TOKEN_B_INITIAL_BALANCE);
+      await tokenA.mint(DCAPairSwapHandler.address, PAIR_TOKEN_A_INITIAL_BALANCE);
+      await tokenB.mint(DCAPairSwapHandler.address, PAIR_TOKEN_B_INITIAL_BALANCE);
+      ({ amountToBeProvidedBySwapper, amountToRewardSwapperWith, tokenAFee, tokenBFee } = await setNextSwapInfo({
+        nextSwapToPerform: 2,
+        amountToSwapOfTokenA: utils.parseEther('2'),
+        amountToSwapOfTokenB: utils.parseEther('1'),
+        ratePerUnitBToA: utils.parseEther('1'),
+      }));
     });
 
-    // When flash swaps are used
-    //   then callee is called
-    //   balance is exchanged properly
-
-    // When flash swaps are used but amount it not returned
-    //   then tx is reverted
-    //   callee's state isn't modified
-    //   balance is not exchanged
-
-    when('', () => {
+    when('flash swaps are used', () => {
       given(async () => {
-        DCAPairSwapHandler['swap(address,bytes)'];
+        await DCAPairSwapHandler['swap(address,bytes)'](DCAPairSwapCallee.address, BYTES);
+      });
+
+      then('callee is called', async () => {
+        const { pair, sender, rewardToken, rewardAmount, tokenToProvide, amountToProvide, data } = await DCAPairSwapCallee.getLastCall();
+        expect(pair).to.equal(DCAPairSwapHandler.address);
+        expect(sender).to.equal(owner.address);
+        expect(rewardToken).to.equal(tokenA.address);
+        expect(rewardAmount).to.equal(amountToRewardSwapperWith);
+        expect(tokenToProvide).to.equal(tokenB.address);
+        expect(amountToProvide).to.equal(amountToBeProvidedBySwapper);
+        expect(data).to.equal(ethers.utils.hexlify(BYTES));
+      });
+
+      then('callee balance is modified correctly', async () => {
+        const calleeTokenABalance = await tokenA.balanceOf(DCAPairSwapCallee.address);
+        const calleeTokenBBalance = await tokenB.balanceOf(DCAPairSwapCallee.address);
+
+        expect(calleeTokenABalance).to.equal(CALLEE_TOKEN_A_INITIAL_BALANCE.add(amountToRewardSwapperWith));
+        expect(calleeTokenBBalance).to.equal(CALLEE_TOKEN_B_INITIAL_BALANCE.sub(amountToBeProvidedBySwapper));
+      });
+
+      then('pair balance is modified correctly', async () => {
+        const pairTokenABalance = await tokenA.balanceOf(DCAPairSwapHandler.address);
+        const pairTokenBBalance = await tokenB.balanceOf(DCAPairSwapHandler.address);
+
+        expect(pairTokenABalance).to.equal(PAIR_TOKEN_A_INITIAL_BALANCE.sub(amountToRewardSwapperWith).sub(tokenAFee));
+        expect(pairTokenBBalance).to.equal(PAIR_TOKEN_B_INITIAL_BALANCE.add(amountToBeProvidedBySwapper).sub(tokenBFee));
+      });
+    });
+
+    when('flash swaps are used but amount is not returned', () => {
+      let tx: Promise<TransactionResponse>;
+
+      given(async () => {
+        await DCAPairSwapCallee.dontProvideTokens();
+        tx = DCAPairSwapHandler['swap(address,bytes)'](DCAPairSwapCallee.address, BYTES);
+        await behaviours.waitForTxAndNotThrow(tx);
+      });
+
+      then('tx is reverted', async () => {
+        await expect(tx).to.be.revertedWith('DCAPair: callee did not provide the expected liquidity');
+      });
+
+      then('callee state is not modified', async () => {
+        const wasCalled = await DCAPairSwapCallee.wasThereACall();
+        expect(wasCalled).to.be.false;
+      });
+
+      then('callee balance is not modified', async () => {
+        const calleeTokenABalance = await tokenA.balanceOf(DCAPairSwapCallee.address);
+        const calleeTokenBBalance = await tokenB.balanceOf(DCAPairSwapCallee.address);
+
+        expect(calleeTokenABalance).to.equal(CALLEE_TOKEN_A_INITIAL_BALANCE);
+        expect(calleeTokenBBalance).to.equal(CALLEE_TOKEN_B_INITIAL_BALANCE);
+      });
+
+      then('pair balance is not modified', async () => {
+        const pairTokenABalance = await tokenA.balanceOf(DCAPairSwapHandler.address);
+        const pairTokenBBalance = await tokenB.balanceOf(DCAPairSwapHandler.address);
+
+        expect(pairTokenABalance).to.equal(PAIR_TOKEN_A_INITIAL_BALANCE);
+        expect(pairTokenBBalance).to.equal(PAIR_TOKEN_B_INITIAL_BALANCE);
       });
     });
   });

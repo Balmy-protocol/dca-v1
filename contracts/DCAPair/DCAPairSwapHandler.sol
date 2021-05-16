@@ -174,7 +174,7 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
 
     // Optimistically transfer tokens
     if (_nextSwapInformation.amountToRewardSwapperWith > 0) {
-      _nextSwapInformation.tokenToRewardSwapperWith.safeTransfer(msg.sender, _nextSwapInformation.amountToRewardSwapperWith);
+      _nextSwapInformation.tokenToRewardSwapperWith.safeTransfer(_to, _nextSwapInformation.amountToRewardSwapperWith);
     }
 
     if (_to != address(0)) {
@@ -195,7 +195,7 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
       // Make sure that they sent the tokens back
       require(
         _balanceAfter >= _balanceBefore + _nextSwapInformation.amountToBeProvidedBySwapper,
-        'DCAPair: caller did not provide the expected liquidity'
+        'DCAPair: callee did not provide the expected liquidity'
       );
     } else if (_nextSwapInformation.amountToBeProvidedBySwapper > 0) {
       _nextSwapInformation.tokenToBeProvidedBySwapper.safeTransferFrom(
