@@ -5,6 +5,7 @@ pragma abicoder v2;
 import 'hardhat/console.sol';
 
 import '../interfaces/ISlidingOracle.sol';
+import '../interfaces/IDCAPairSwapCallee.sol';
 import './DCAPairParameters.sol';
 
 interface IDCAPairSwapHandler {
@@ -43,6 +44,8 @@ interface IDCAPairSwapHandler {
   function getNextSwapInfo() external view returns (NextSwapInformation memory _nextSwapInformation);
 
   function swap() external;
+
+  function swap(address _to, bytes calldata _data) external;
 }
 
 abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
@@ -150,9 +153,43 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
     }
   }
 
-  function _swap() internal {
+  function _swap(address _to, bytes memory _data) internal {
     require(lastSwapPerformed <= block.timestamp - swapInterval, 'DCAPair: within swap interval');
     NextSwapInformation memory _nextSwapInformation = getNextSwapInfo();
+
+    // Optimistically transfer tokens
+    if (_nextSwapInformation.amountToRewardSwapperWith > 0) {
+      _nextSwapInformation.tokenToRewardSwapperWith.safeTransfer(msg.sender, _nextSwapInformation.amountToRewardSwapperWith);
+    }
+
+    if (_to != address(0)) {
+      uint256 _balanceBefore = _nextSwapInformation.tokenToBeProvidedBySwapper.balanceOf(address(this));
+
+      // Make call
+      IDCAPairSwapCallee(_to).DCAPairSwapCall(
+        msg.sender,
+        _nextSwapInformation.tokenToRewardSwapperWith,
+        _nextSwapInformation.amountToRewardSwapperWith,
+        _nextSwapInformation.tokenToBeProvidedBySwapper,
+        _nextSwapInformation.amountToBeProvidedBySwapper,
+        _data
+      );
+
+      uint256 _balanceAfter = _nextSwapInformation.tokenToBeProvidedBySwapper.balanceOf(address(this));
+
+      // Make sure thay they sent the tokens back
+      require(
+        _balanceAfter - _balanceBefore >= _nextSwapInformation.amountToBeProvidedBySwapper,
+        'DCAPair: caller did not provide the expected liquidity'
+      );
+    } else if (_nextSwapInformation.amountToBeProvidedBySwapper > 0) {
+      _nextSwapInformation.tokenToBeProvidedBySwapper.safeTransferFrom(
+        msg.sender,
+        address(this),
+        _nextSwapInformation.amountToBeProvidedBySwapper
+      );
+    }
+
     _registerSwap(
       address(tokenA),
       _nextSwapInformation.amountToSwapTokenA,
@@ -168,14 +205,6 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
     performedSwaps = _nextSwapInformation.swapToPerform;
     lastSwapPerformed = block.timestamp;
     // Send fees
-    if (_nextSwapInformation.amountToBeProvidedBySwapper > 0) {
-      _nextSwapInformation.tokenToBeProvidedBySwapper.safeTransferFrom(
-        msg.sender,
-        address(this),
-        _nextSwapInformation.amountToBeProvidedBySwapper
-      );
-      _nextSwapInformation.tokenToRewardSwapperWith.safeTransfer(msg.sender, _nextSwapInformation.amountToRewardSwapperWith);
-    }
     tokenA.safeTransfer(factory.feeRecipient(), _nextSwapInformation.tokenAFee);
     tokenB.safeTransfer(factory.feeRecipient(), _nextSwapInformation.tokenBFee);
     emit Swapped(_nextSwapInformation);
