@@ -11,6 +11,6 @@ interface IDCAPairSwapCallee {
     uint256 _rewardAmount,
     IERC20Detailed _tokenToProvide,
     uint256 _amountToProvide,
-    bytes calldata data
+    bytes calldata _data
   ) external;
 }

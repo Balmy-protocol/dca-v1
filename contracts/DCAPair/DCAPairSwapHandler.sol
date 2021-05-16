@@ -157,6 +157,21 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
     require(lastSwapPerformed <= block.timestamp - swapInterval, 'DCAPair: within swap interval');
     NextSwapInformation memory _nextSwapInformation = getNextSwapInfo();
 
+    _registerSwap(
+      address(tokenA),
+      _nextSwapInformation.amountToSwapTokenA,
+      _nextSwapInformation.ratePerUnitAToB,
+      _nextSwapInformation.swapToPerform
+    );
+    _registerSwap(
+      address(tokenB),
+      _nextSwapInformation.amountToSwapTokenB,
+      _nextSwapInformation.ratePerUnitBToA,
+      _nextSwapInformation.swapToPerform
+    );
+    performedSwaps = _nextSwapInformation.swapToPerform;
+    lastSwapPerformed = block.timestamp;
+
     // Optimistically transfer tokens
     if (_nextSwapInformation.amountToRewardSwapperWith > 0) {
       _nextSwapInformation.tokenToRewardSwapperWith.safeTransfer(msg.sender, _nextSwapInformation.amountToRewardSwapperWith);
@@ -177,9 +192,9 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
 
       uint256 _balanceAfter = _nextSwapInformation.tokenToBeProvidedBySwapper.balanceOf(address(this));
 
-      // Make sure thay they sent the tokens back
+      // Make sure that they sent the tokens back
       require(
-        _balanceAfter - _balanceBefore >= _nextSwapInformation.amountToBeProvidedBySwapper,
+        _balanceAfter >= _balanceBefore + _nextSwapInformation.amountToBeProvidedBySwapper,
         'DCAPair: caller did not provide the expected liquidity'
       );
     } else if (_nextSwapInformation.amountToBeProvidedBySwapper > 0) {
@@ -190,20 +205,6 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
       );
     }
 
-    _registerSwap(
-      address(tokenA),
-      _nextSwapInformation.amountToSwapTokenA,
-      _nextSwapInformation.ratePerUnitAToB,
-      _nextSwapInformation.swapToPerform
-    );
-    _registerSwap(
-      address(tokenB),
-      _nextSwapInformation.amountToSwapTokenB,
-      _nextSwapInformation.ratePerUnitBToA,
-      _nextSwapInformation.swapToPerform
-    );
-    performedSwaps = _nextSwapInformation.swapToPerform;
-    lastSwapPerformed = block.timestamp;
     // Send fees
     tokenA.safeTransfer(factory.feeRecipient(), _nextSwapInformation.tokenAFee);
     tokenB.safeTransfer(factory.feeRecipient(), _nextSwapInformation.tokenBFee);

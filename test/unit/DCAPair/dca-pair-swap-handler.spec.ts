@@ -881,6 +881,31 @@ describe('DCAPairSwapHandler', () => {
     //   tokenToBeProvidedExternally: () => constants.ZERO_ADDRESS,
     // });
   });
+
+  describe('flash swap', () => {
+    let DCAPairSwapCallee: Contract;
+
+    given(async () => {
+      const DCAPairSwapCalleeContract = await ethers.getContractFactory('contracts/mocks/DCAPairSwapCallee.sol:DCAPairSwapCalleeMock');
+      DCAPairSwapCallee = await DCAPairSwapCalleeContract.deploy();
+    });
+
+    // When flash swaps are used
+    //   then callee is called
+    //   balance is exchanged properly
+
+    // When flash swaps are used but amount it not returned
+    //   then tx is reverted
+    //   callee's state isn't modified
+    //   balance is not exchanged
+
+    when('', () => {
+      given(async () => {
+        DCAPairSwapHandler['swap(address,bytes)'];
+      });
+    });
+  });
+
   function swapTest({
     title,
     nextSwapToPerform,
