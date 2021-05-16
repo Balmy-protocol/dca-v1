@@ -172,13 +172,13 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
     performedSwaps = _nextSwapInformation.swapToPerform;
     lastSwapPerformed = block.timestamp;
 
-    // Optimistically transfer tokens
-    if (_nextSwapInformation.amountToRewardSwapperWith > 0) {
-      _nextSwapInformation.tokenToRewardSwapperWith.safeTransfer(_to, _nextSwapInformation.amountToRewardSwapperWith);
-    }
-
     if (_to != address(0)) {
       uint256 _balanceBefore = _nextSwapInformation.tokenToBeProvidedBySwapper.balanceOf(address(this));
+
+      // Optimistically transfer tokens
+      if (_nextSwapInformation.amountToRewardSwapperWith > 0) {
+        _nextSwapInformation.tokenToRewardSwapperWith.safeTransfer(_to, _nextSwapInformation.amountToRewardSwapperWith);
+      }
 
       // Make call
       IDCAPairSwapCallee(_to).DCAPairSwapCall(
@@ -203,6 +203,7 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
         address(this),
         _nextSwapInformation.amountToBeProvidedBySwapper
       );
+      _nextSwapInformation.tokenToRewardSwapperWith.safeTransfer(msg.sender, _nextSwapInformation.amountToRewardSwapperWith);
     }
 
     // Send fees
