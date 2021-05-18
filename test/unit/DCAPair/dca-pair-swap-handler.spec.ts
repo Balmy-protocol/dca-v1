@@ -1012,7 +1012,7 @@ describe('DCAPairSwapHandler', () => {
     let initialSwapperTokenABalance: BigNumber;
     let initialSwapperTokenBBalance: BigNumber;
     let initialLastSwapPerformed: BigNumber;
-    let swapTx: Promise<TransactionResponse>;
+    let swapTx: TransactionResponse;
 
     when(title, () => {
       given(async () => {
@@ -1032,10 +1032,7 @@ describe('DCAPairSwapHandler', () => {
         } else {
           await tokenB.approve(DCAPairSwapHandler.address, (amountToBeProvidedBySwapper as BigNumber).add(threshold!));
         }
-        swapTx = DCAPairSwapHandler['swap()']();
-      });
-      then('tx is not reverted', async () => {
-        await expect(swapTx).to.not.be.reverted;
+        swapTx = await DCAPairSwapHandler['swap()']();
       });
       then('token to be provided by swapper needed is provided', async () => {
         if (!tokenToBeProvidedBySwapper) {
@@ -1165,8 +1162,7 @@ describe('DCAPairSwapHandler', () => {
         expect(await DCAPairSwapHandler.lastSwapPerformed()).to.be.gt(initialLastSwapPerformed);
       });
       then('emits event with correct information', async () => {
-        const transactionResponse = await swapTx;
-        const nextSwapInformation = (await readArgFromEvent(transactionResponse, 'Swapped', '_nextSwapInformation')) as NextSwapInfo;
+        const nextSwapInformation = (await readArgFromEvent(swapTx, 'Swapped', '_nextSwapInformation')) as NextSwapInfo;
         expect(nextSwapInformation.swapToPerform).to.equal(nextSwapToPerform);
         bn.expectToEqualWithThreshold({
           value: nextSwapInformation.amountToSwapTokenA,
