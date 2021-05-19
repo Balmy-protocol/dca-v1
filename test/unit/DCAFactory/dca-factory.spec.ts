@@ -3,7 +3,7 @@ import { Contract, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
 import { constants, behaviours } from '../../utils';
 
-describe('DCAFactory', function () {
+describe.only('DCAFactory', function () {
   let governor: SignerWithAddress;
   let feeRecipient: SignerWithAddress;
   let DCAFactoryContract: ContractFactory;

@@ -29,16 +29,18 @@ interface IDCAPairSwapHandler {
 
   event Swapped(NextSwapInformation _nextSwapInformation);
 
-  function swapInterval() external returns (uint32);
+  function swapInterval() external view returns (uint32);
 
-  function lastSwapPerformed() external returns (uint256);
+  function lastSwapPerformed() external view returns (uint256);
 
-  function swapAmountAccumulator(address) external returns (uint256);
+  function swapAmountAccumulator(address) external view returns (uint256);
 
   function oracle() external returns (ISlidingOracle);
 
+  // TODO: Why is this public?
   function setOracle(ISlidingOracle _oracle) external;
 
+  // TODO: Why is this public?
   function setSwapInterval(uint32 _swapInterval) external;
 
   function getNextSwapInfo() external view returns (NextSwapInformation memory _nextSwapInformation);
