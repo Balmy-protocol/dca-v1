@@ -17,8 +17,8 @@ contract DCAPairPositionHandlerMock is DCAPairPositionHandler, DCAPairParameters
   // PositionHandler
   function deposit(
     address _tokenAddress,
-    uint256 _rate,
-    uint256 _amountOfSwaps
+    uint192 _rate,
+    uint32 _amountOfSwaps
   ) public override {
     _deposit(_tokenAddress, _rate, _amountOfSwaps);
   }
@@ -31,18 +31,18 @@ contract DCAPairPositionHandlerMock is DCAPairPositionHandler, DCAPairParameters
     (_swappedTokenA, _swappedTokenB) = _withdrawSwappedMany(_dcaIds);
   }
 
-  function modifyRate(uint256 _dcaId, uint256 _newRate) external override {
+  function modifyRate(uint256 _dcaId, uint192 _newRate) external override {
     _modifyRate(_dcaId, _newRate);
   }
 
-  function modifySwaps(uint256 _dcaId, uint256 _newSwaps) external override {
+  function modifySwaps(uint256 _dcaId, uint32 _newSwaps) external override {
     _modifySwaps(_dcaId, _newSwaps);
   }
 
   function modifyRateAndSwaps(
     uint256 _dcaId,
-    uint256 _newRate,
-    uint256 _newSwaps
+    uint192 _newRate,
+    uint32 _newSwaps
   ) external override {
     _modifyRateAndSwaps(_dcaId, _newRate, _newSwaps);
   }
@@ -58,7 +58,7 @@ contract DCAPairPositionHandlerMock is DCAPairPositionHandler, DCAPairParameters
   function addFundsToPosition(
     uint256 _dcaId,
     uint256 _amount,
-    uint256 _newSwaps
+    uint32 _newSwaps
   ) external override {
     _addFundsToPosition(_dcaId, _amount, _newSwaps);
   }

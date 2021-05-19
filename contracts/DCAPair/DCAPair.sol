@@ -12,7 +12,7 @@ contract DCAPair is DCAPairParameters, DCAPairSwapHandler, DCAPairPositionHandle
   constructor(
     IERC20Detailed _tokenA,
     IERC20Detailed _tokenB,
-    uint256 _swapInterval
+    uint32 _swapInterval
   )
     DCAPairParameters(IDCAFactory(msg.sender), _tokenA, _tokenB)
     DCAPairSwapHandler(ISlidingOracle(address(0xe)), _swapInterval)
@@ -22,8 +22,8 @@ contract DCAPair is DCAPairParameters, DCAPairSwapHandler, DCAPairPositionHandle
   // PositionHandler
   function deposit(
     address _token,
-    uint256 _rate,
-    uint256 _amountOfSwaps
+    uint192 _rate,
+    uint32 _amountOfSwaps
   ) external override {
     _deposit(_token, _rate, _amountOfSwaps);
   }
@@ -36,18 +36,18 @@ contract DCAPair is DCAPairParameters, DCAPairSwapHandler, DCAPairPositionHandle
     (_swappedTokenA, _swappedTokenB) = _withdrawSwappedMany(_dcaIds);
   }
 
-  function modifyRate(uint256 _dcaId, uint256 _newRate) external override {
+  function modifyRate(uint256 _dcaId, uint192 _newRate) external override {
     _modifyRate(_dcaId, _newRate);
   }
 
-  function modifySwaps(uint256 _dcaId, uint256 _newSwaps) external override {
+  function modifySwaps(uint256 _dcaId, uint32 _newSwaps) external override {
     _modifySwaps(_dcaId, _newSwaps);
   }
 
   function modifyRateAndSwaps(
     uint256 _dcaId,
-    uint256 _newRate,
-    uint256 _newSwaps
+    uint192 _newRate,
+    uint32 _newSwaps
   ) external override {
     _modifyRateAndSwaps(_dcaId, _newRate, _newSwaps);
   }
@@ -59,7 +59,7 @@ contract DCAPair is DCAPairParameters, DCAPairSwapHandler, DCAPairPositionHandle
   function addFundsToPosition(
     uint256 _dcaId,
     uint256 _amount,
-    uint256 _newSwaps
+    uint32 _newSwaps
   ) external override {
     _addFundsToPosition(_dcaId, _amount, _newSwaps);
   }
@@ -69,7 +69,7 @@ contract DCAPair is DCAPairParameters, DCAPairSwapHandler, DCAPairPositionHandle
     _setOracle(_oracle);
   }
 
-  function setSwapInterval(uint256 _swapInterval) public override {
+  function setSwapInterval(uint32 _swapInterval) public override {
     _setSwapInterval(_swapInterval);
   }
 

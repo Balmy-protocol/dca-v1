@@ -1157,13 +1157,13 @@ describe('DCAPositionHandler', () => {
     }
   ) {
     const {
-      from: positionFromAddress,
+      fromTokenA,
       rate: positionRate,
       lastWithdrawSwap: positionLastWithdrawSwap,
       lastSwap: positionLastSwap,
     } = await DCAPositionHandler.userPositions(dcaId);
     const fromAddress = typeof from === 'string' ? from : from.address;
-    expect(positionFromAddress, 'Wrong from address in position').to.equal(fromAddress);
+    expect(fromTokenA, 'Wrong from address in position').to.equal(tokenA.address === fromAddress);
     expect(positionRate, 'Wrong rate').to.equal(fromEther(rate));
     expect(positionLastWithdrawSwap, 'Wrong last withdraw swap').to.equal(lastWithdrawSwap);
     expect(positionLastSwap, 'Wrong last swap').to.equal(lastSwap);

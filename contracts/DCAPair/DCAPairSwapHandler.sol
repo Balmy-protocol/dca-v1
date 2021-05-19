@@ -10,7 +10,7 @@ import './DCAPairParameters.sol';
 
 interface IDCAPairSwapHandler {
   struct NextSwapInformation {
-    uint256 swapToPerform;
+    uint32 swapToPerform;
     uint256 amountToSwapTokenA;
     uint256 amountToSwapTokenB;
     uint256 ratePerUnitBToA;
@@ -25,11 +25,11 @@ interface IDCAPairSwapHandler {
 
   event OracleSet(ISlidingOracle _oracle);
 
-  event SwapIntervalSet(uint256 _swapInterval);
+  event SwapIntervalSet(uint32 _swapInterval);
 
   event Swapped(NextSwapInformation _nextSwapInformation);
 
-  function swapInterval() external returns (uint256);
+  function swapInterval() external returns (uint32);
 
   function lastSwapPerformed() external returns (uint256);
 
@@ -39,7 +39,7 @@ interface IDCAPairSwapHandler {
 
   function setOracle(ISlidingOracle _oracle) external;
 
-  function setSwapInterval(uint256 _swapInterval) external;
+  function setSwapInterval(uint32 _swapInterval) external;
 
   function getNextSwapInfo() external view returns (NextSwapInformation memory _nextSwapInformation);
 
@@ -51,14 +51,14 @@ interface IDCAPairSwapHandler {
 abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
   using SafeERC20 for IERC20Detailed;
 
-  uint256 internal constant _MINIMUM_SWAP_INTERVAL = 1 minutes;
+  uint32 internal constant _MINIMUM_SWAP_INTERVAL = 1 minutes;
 
   mapping(address => uint256) public override swapAmountAccumulator;
-  uint256 public override swapInterval;
+  uint32 public override swapInterval;
   uint256 public override lastSwapPerformed;
   ISlidingOracle public override oracle;
 
-  constructor(ISlidingOracle _oracle, uint256 _swapInterval) {
+  constructor(ISlidingOracle _oracle, uint32 _swapInterval) {
     _setOracle(_oracle);
     _setSwapInterval(_swapInterval);
   }
@@ -69,7 +69,7 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
     emit OracleSet(_oracle);
   }
 
-  function _setSwapInterval(uint256 _swapInterval) internal {
+  function _setSwapInterval(uint32 _swapInterval) internal {
     require(_swapInterval >= _MINIMUM_SWAP_INTERVAL, 'DCAPair: interval too short');
     swapInterval = _swapInterval;
     emit SwapIntervalSet(_swapInterval);
@@ -77,10 +77,10 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
 
   function _addNewRatePerUnit(
     address _address,
-    uint256 _performedSwap,
+    uint32 _performedSwap,
     uint256 _ratePerUnit
   ) internal {
-    uint256 _previousSwap = _performedSwap - 1;
+    uint32 _previousSwap = _performedSwap - 1;
     uint256[2] memory _accumRatesPerUnitPreviousSwap = _accumRatesPerUnit[_address][_previousSwap];
     (bool _ok, uint256 _result) = Math.tryAdd(_accumRatesPerUnitPreviousSwap[0], _ratePerUnit);
     if (_ok) {
@@ -95,19 +95,19 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
     address _token,
     uint256 _internalAmountUsedToSwap,
     uint256 _ratePerUnit,
-    uint256 _swapToRegister
+    uint32 _swapToRegister
   ) internal {
     swapAmountAccumulator[_token] = _internalAmountUsedToSwap;
     _addNewRatePerUnit(_token, _swapToRegister, _ratePerUnit);
     delete swapAmountDelta[_token][_swapToRegister];
   }
 
-  function _getAmountToSwap(address _address, uint256 _swapToPerform) internal view returns (uint256 _swapAmountAccumulator) {
+  function _getAmountToSwap(address _address, uint32 _swapToPerform) internal view returns (uint256 _swapAmountAccumulator) {
     unchecked {_swapAmountAccumulator = swapAmountAccumulator[_address] + uint256(swapAmountDelta[_address][_swapToPerform]);}
   }
 
   function _convertTo(
-    uint256 _fromTokenMagnitude,
+    uint80 _fromTokenMagnitude,
     uint256 _amountFrom,
     uint256 _rateFromTo
   ) internal pure returns (uint256 _amountTo) {
@@ -115,7 +115,7 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
   }
 
   function _calculateNecessary(
-    uint256 _fromTokenMagnitude,
+    uint80 _fromTokenMagnitude,
     uint256 _amountTo,
     uint256 _rateFromTo
   ) internal pure returns (uint256 _amountFrom) {
