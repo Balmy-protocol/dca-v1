@@ -54,8 +54,8 @@ abstract contract DCAPairParameters is IDCAPairParameters {
   uint24 public constant override FEE_PRECISION = 10000; // TODO: Take from factory in initiation
 
   // Internal constants
-  uint80 internal _magnitudeA;
-  uint80 internal _magnitudeB;
+  uint256 internal _magnitudeA;
+  uint256 internal _magnitudeB;
 
   // Basic setup
   IDCAFactory public override factory;
@@ -87,18 +87,14 @@ abstract contract DCAPairParameters is IDCAPairParameters {
   function _setTokenA(IERC20Detailed _tokenA) internal {
     require(address(_tokenA) != address(0), 'DCAPair: zero address');
     tokenA = _tokenA;
-    uint8 _decimals = _tokenA.decimals();
-    require(_decimals <= 24, 'DCAPair: tokens with more than 24 decimals are not allowed');
-    _magnitudeA = uint80(10**_decimals);
+    _magnitudeA = 10**_tokenA.decimals();
     emit TokenASet(_tokenA);
   }
 
   function _setTokenB(IERC20Detailed _tokenB) internal {
     require(address(_tokenB) != address(0), 'DCAPair: zero address');
     tokenB = _tokenB;
-    uint8 _decimals = _tokenB.decimals();
-    require(_decimals <= 24, 'DCAPair: tokens with more than 24 decimals are not allowed');
-    _magnitudeB = uint80(10**_decimals);
+    _magnitudeB = 10**_tokenB.decimals();
     emit TokenBSet(_tokenB);
   }
 

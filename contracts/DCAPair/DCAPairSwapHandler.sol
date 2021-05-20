@@ -103,7 +103,7 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
   }
 
   function _convertTo(
-    uint80 _fromTokenMagnitude,
+    uint256 _fromTokenMagnitude,
     uint256 _amountFrom,
     uint256 _rateFromTo
   ) internal pure returns (uint256 _amountTo) {
@@ -111,7 +111,7 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
   }
 
   function _calculateNecessary(
-    uint80 _fromTokenMagnitude,
+    uint256 _fromTokenMagnitude,
     uint256 _amountTo,
     uint256 _rateFromTo
   ) internal pure returns (uint256 _amountFrom) {
