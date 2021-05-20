@@ -88,7 +88,7 @@ abstract contract DCAPairParameters is IDCAPairParameters {
     require(address(_tokenA) != address(0), 'DCAPair: zero address');
     tokenA = _tokenA;
     uint8 _decimals = _tokenA.decimals();
-    // require(_decimals <= 24, 'DCAPair: tokens with more than 24 decimals are not allowed');
+    require(_decimals <= 24, 'DCAPair: tokens with more than 24 decimals are not allowed');
     _magnitudeA = uint80(10**_decimals);
     emit TokenASet(_tokenA);
   }
@@ -97,7 +97,7 @@ abstract contract DCAPairParameters is IDCAPairParameters {
     require(address(_tokenB) != address(0), 'DCAPair: zero address');
     tokenB = _tokenB;
     uint8 _decimals = _tokenB.decimals();
-    // require(_decimals <= 24, 'DCAPair: tokens with more than 24 decimals are not allowed');
+    require(_decimals <= 24, 'DCAPair: tokens with more than 24 decimals are not allowed');
     _magnitudeB = uint80(10**_decimals);
     emit TokenBSet(_tokenB);
   }
