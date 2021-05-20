@@ -183,10 +183,10 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
 
     // We will store the swapped amount without the fee. The fee will be applied during withdraw/terminate
     uint256 _swapped = _calculateSwapped(_dcaId, false);
-    // require(
-    //   _swapped < type(uint248).max,
-    //   'DCAPair: Please withdraw before modifying your position, because you might lose some funds otherwise.'
-    // );
+    require(
+      _swapped <= type(uint248).max,
+      'DCAPair: Please withdraw before modifying your position, because you might lose some funds otherwise.'
+    );
 
     _removePosition(_dcaId);
     (uint32 _startingSwap, uint32 _finalSwap) = _addPosition(_dcaId, address(_from), _newRate, _newAmountOfSwaps, uint248(_swapped));
