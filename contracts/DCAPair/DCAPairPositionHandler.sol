@@ -57,7 +57,9 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
   ) public override returns (uint256) {
     require(_tokenAddress == address(tokenA) || _tokenAddress == address(tokenB), 'DCAPair: Invalid deposit address');
     IERC20Detailed _from = _tokenAddress == address(tokenA) ? tokenA : tokenB;
-    _from.safeTransferFrom(msg.sender, address(this), _rate * _amountOfSwaps);
+    uint256 _amount = _rate * _amountOfSwaps;
+    _from.safeTransferFrom(msg.sender, address(this), _amount);
+    _balances[_tokenAddress] += _amount;
     _idCounter += 1;
     _safeMint(msg.sender, _idCounter);
     (uint32 _startingSwap, uint32 _finalSwap) = _addPosition(_idCounter, _tokenAddress, _rate, _amountOfSwaps, 0);
@@ -74,6 +76,7 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
     userPositions[_dcaId].swappedBeforeModified = 0;
 
     IERC20Detailed _to = _getTo(_dcaId);
+    _balances[address(_to)] -= _swapped;
     _to.safeTransfer(msg.sender, _swapped);
 
     emit Withdrew(msg.sender, _dcaId, address(_to), _swapped);
@@ -94,10 +97,12 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
     }
 
     if (_swappedTokenA > 0) {
+      _balances[address(tokenA)] -= _swappedTokenA;
       tokenA.safeTransfer(msg.sender, _swappedTokenA);
     }
 
     if (_swappedTokenB > 0) {
+      _balances[address(tokenB)] -= _swappedTokenB;
       tokenB.safeTransfer(msg.sender, _swappedTokenB);
     }
     emit WithdrewMany(msg.sender, _dcaIds, _swappedTokenA, _swappedTokenB);
@@ -115,10 +120,12 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
     _burn(_dcaId);
 
     if (_swapped > 0) {
+      _balances[address(_to)] -= _swapped;
       _to.safeTransfer(msg.sender, _swapped);
     }
 
     if (_unswapped > 0) {
+      _balances[address(_from)] -= _unswapped;
       _from.safeTransfer(msg.sender, _unswapped);
     }
 
@@ -189,9 +196,11 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
 
     if (_totalNecessary > _unswapped) {
       // We need to ask for more funds
+      _balances[address(_from)] += _totalNecessary - _unswapped;
       _from.safeTransferFrom(msg.sender, address(this), _totalNecessary - _unswapped);
     } else if (_totalNecessary < _unswapped) {
       // We need to return to the owner the amount that won't be used anymore
+      _balances[address(_from)] -= _unswapped - _totalNecessary;
       _from.safeTransfer(msg.sender, _unswapped - _totalNecessary);
     }
 

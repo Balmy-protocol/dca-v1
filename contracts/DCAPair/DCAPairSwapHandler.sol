@@ -81,6 +81,7 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
   ) internal {
     swapAmountAccumulator[_token] = _internalAmountUsedToSwap;
     _addNewRatePerUnit(_token, _swapToRegister, _ratePerUnit);
+    _balances[_token] -= _internalAmountUsedToSwap;
     delete swapAmountDelta[_token][_swapToRegister];
   }
 

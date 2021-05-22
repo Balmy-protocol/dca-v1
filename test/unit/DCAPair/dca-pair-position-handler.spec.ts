@@ -52,6 +52,7 @@ describe('DCAPositionHandler', () => {
     await tokenB.approveInternal(owner.address, DCAPositionHandler.address, fromEther(1000));
     await tokenA.mint(DCAPositionHandler.address, fromEther(INITIAL_TOKEN_A_BALANCE_CONTRACT));
     await tokenB.mint(DCAPositionHandler.address, fromEther(INITIAL_TOKEN_B_BALANCE_CONTRACT));
+    await DCAPositionHandler.setInternalBalances(fromEther(INITIAL_TOKEN_A_BALANCE_CONTRACT), fromEther(INITIAL_TOKEN_B_BALANCE_CONTRACT));
     await tokenA.mint(approved.address, fromEther(INITIAL_TOKEN_A_BALANCE_USER));
     await tokenA.approveInternal(approved.address, DCAPositionHandler.address, fromEther(1000));
     await DCAPositionHandler.setPerformedSwaps(PERFORMED_SWAPS_10);
@@ -138,7 +139,7 @@ describe('DCAPositionHandler', () => {
         await expectBalanceToBe(
           tokenA,
           DCAPositionHandler.address,
-          INITIAL_TOKEN_A_BALANCE_USER + POSITION_RATE_5 * POSITION_SWAPS_TO_PERFORM_10
+          INITIAL_TOKEN_A_BALANCE_CONTRACT + POSITION_RATE_5 * POSITION_SWAPS_TO_PERFORM_10
         );
       });
 
@@ -166,6 +167,14 @@ describe('DCAPositionHandler', () => {
         const balance = await DCAPositionHandler.balanceOf(owner.address);
         expect(tokenOwner).to.equal(owner.address);
         expect(balance).to.equal(1);
+      });
+
+      then('internal balance for token deposited is modified', async () => {
+        await expectInternalBalanceToBe(tokenA, INITIAL_TOKEN_A_BALANCE_CONTRACT + POSITION_RATE_5 * POSITION_SWAPS_TO_PERFORM_10);
+      });
+
+      then('internal balance for token not deposited is not modified', async () => {
+        await expectInternalBalanceToBe(tokenB, INITIAL_TOKEN_B_BALANCE_CONTRACT);
       });
     });
   });
@@ -214,6 +223,11 @@ describe('DCAPositionHandler', () => {
           lastSwap: PERFORMED_SWAPS_10 + POSITION_SWAPS_TO_PERFORM_10,
         });
       });
+
+      then('internal balance is not modified', async () => {
+        await expectInternalBalanceToBe(tokenA, INITIAL_TOKEN_A_BALANCE_CONTRACT + POSITION_RATE_5 * POSITION_SWAPS_TO_PERFORM_10);
+        await expectInternalBalanceToBe(tokenB, INITIAL_TOKEN_B_BALANCE_CONTRACT);
+      });
     });
 
     when(`withdrawing swapped with executed position,`, () => {
@@ -255,6 +269,11 @@ describe('DCAPositionHandler', () => {
       then('calculateSwapped returns 0', async () => {
         const swapped = await DCAPositionHandler.calculateSwapped(dcaId);
         expect(swapped).to.equal(0);
+      });
+
+      then('internal balance is modified', async () => {
+        await expectInternalBalanceToBe(tokenA, INITIAL_TOKEN_A_BALANCE_CONTRACT + POSITION_RATE_5 * POSITION_SWAPS_TO_PERFORM_10);
+        await expectInternalBalanceToBe(tokenB, INITIAL_TOKEN_B_BALANCE_CONTRACT);
       });
     });
   });
@@ -1188,6 +1207,11 @@ describe('DCAPositionHandler', () => {
   async function expectBalanceToBe(token: Contract, address: string, asEther: string | number) {
     const balance = await token.balanceOf(address);
     expect(balance).to.be.equal(fromEther(asEther));
+  }
+
+  async function expectInternalBalanceToBe(token: Contract, asEther: string | number) {
+    const internalBalance = await DCAPositionHandler.internalBalanceOf(token.address);
+    expect(internalBalance).to.equal(fromEther(asEther));
   }
 
   async function expectPositionToBe(
