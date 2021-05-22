@@ -234,7 +234,7 @@ describe('DCAPositionHandler', () => {
         const swapped = fromEther(RATE_PER_UNIT_5 * POSITION_RATE_5);
         const fee = await getFeeFrom(swapped);
         expect(await tokenB.balanceOf(owner.address)).to.equal(fromEther(INITIAL_TOKEN_B_BALANCE_USER).add(swapped).sub(fee));
-        expect(await tokenB.balanceOf(DCAPositionHandler.address)).to.equal(fromEther(INITIAL_TOKEN_B_BALANCE_CONTRACT));
+        await expectBalanceToBe(tokenB, DCAPositionHandler.address, INITIAL_TOKEN_B_BALANCE_CONTRACT);
       });
 
       then('position is updated', async () => {
@@ -457,8 +457,7 @@ describe('DCAPositionHandler', () => {
         const userBalance = await tokenB.balanceOf(owner.address);
         expect(userBalance).to.be.equal(fromEther(INITIAL_TOKEN_B_BALANCE_USER + swappedWhenTerminated).sub(fee));
 
-        const contractBalance = await tokenB.balanceOf(DCAPositionHandler.address);
-        expect(contractBalance).to.be.equal(fromEther(INITIAL_TOKEN_B_BALANCE_CONTRACT));
+        await expectBalanceToBe(tokenB, DCAPositionHandler.address, INITIAL_TOKEN_B_BALANCE_CONTRACT);
       });
 
       then(`position is removed`, async () => {
