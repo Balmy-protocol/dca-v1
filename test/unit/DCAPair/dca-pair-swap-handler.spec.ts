@@ -11,7 +11,7 @@ import { readArgFromEvent } from '../../utils/event-utils';
 const MINIMUM_SWAP_INTERVAL = BigNumber.from('60');
 const APPLY_FEE = (bn: BigNumber) => bn.mul(3).div(1000);
 
-describe.only('DCAPairSwapHandler', () => {
+describe('DCAPairSwapHandler', () => {
   let owner: SignerWithAddress;
   let feeRecipient: SignerWithAddress;
   let tokenA: Contract, tokenB: Contract;
@@ -658,6 +658,7 @@ describe.only('DCAPairSwapHandler', () => {
       then('performed swaps did not increase', async () => {
         expect(await DCAPairSwapHandler.performedSwaps()).to.equal((nextSwapToPerform as BigNumber).sub(1));
       });
+      thenInternalBalancesAreTheSameAsTokenBalances();
     });
   };
 
@@ -832,6 +833,7 @@ describe.only('DCAPairSwapHandler', () => {
       await tokenB.mint(DCAPairSwapCallee.address, CALLEE_TOKEN_B_INITIAL_BALANCE);
       await tokenA.mint(DCAPairSwapHandler.address, PAIR_TOKEN_A_INITIAL_BALANCE);
       await tokenB.mint(DCAPairSwapHandler.address, PAIR_TOKEN_B_INITIAL_BALANCE);
+      await DCAPairSwapHandler.setInternalBalances(PAIR_TOKEN_A_INITIAL_BALANCE, PAIR_TOKEN_B_INITIAL_BALANCE);
       ({ amountToBeProvidedBySwapper, amountToRewardSwapperWith, platformFeeTokenA, platformFeeTokenB } = await setNextSwapInfo({
         nextSwapToPerform: 2,
         amountToSwapOfTokenA: utils.parseEther('2'),
@@ -871,6 +873,8 @@ describe.only('DCAPairSwapHandler', () => {
         expect(pairTokenABalance).to.equal(PAIR_TOKEN_A_INITIAL_BALANCE.sub(amountToRewardSwapperWith).sub(platformFeeTokenA));
         expect(pairTokenBBalance).to.equal(PAIR_TOKEN_B_INITIAL_BALANCE.add(amountToBeProvidedBySwapper).sub(platformFeeTokenB));
       });
+
+      thenInternalBalancesAreTheSameAsTokenBalances();
     });
 
     when('flash swaps are used but amount is not returned', () => {
@@ -906,6 +910,8 @@ describe.only('DCAPairSwapHandler', () => {
         expect(pairTokenABalance).to.equal(PAIR_TOKEN_A_INITIAL_BALANCE);
         expect(pairTokenBBalance).to.equal(PAIR_TOKEN_B_INITIAL_BALANCE);
       });
+
+      thenInternalBalancesAreTheSameAsTokenBalances();
     });
   });
 
@@ -949,7 +955,7 @@ describe.only('DCAPairSwapHandler', () => {
     let initialLastSwapPerformed: BigNumber;
     let swapTx: TransactionResponse;
 
-    when.only(title, () => {
+    when(title, () => {
       given(async () => {
         await setNextSwapInfo({
           nextSwapToPerform,
@@ -1150,6 +1156,30 @@ describe.only('DCAPairSwapHandler', () => {
           expect(nextSwapInformation.tokenToBeProvidedBySwapper).to.equal(tokenToBeProvidedBySwapper());
           expect(nextSwapInformation.tokenToRewardSwapperWith).to.equal(tokenToRewardSwapperWith!());
         }
+      });
+
+      thenInternalBalancesAreTheSameAsTokenBalances(threshold as BigNumber);
+    });
+  }
+
+  function thenInternalBalancesAreTheSameAsTokenBalances(threshold: BigNumber = BigNumber.from(0)) {
+    then('internal balance for token A is as expected', async () => {
+      const balance = await tokenA.balanceOf(DCAPairSwapHandler.address);
+      const internalBalance = await DCAPairSwapHandler.internalBalanceOf(tokenA.address);
+      bn.expectToEqualWithThreshold({
+        value: internalBalance,
+        to: balance,
+        threshold,
+      });
+    });
+
+    then('internal balance for token B is as expected', async () => {
+      const balance = await tokenB.balanceOf(DCAPairSwapHandler.address);
+      const internalBalance = await DCAPairSwapHandler.internalBalanceOf(tokenB.address);
+      bn.expectToEqualWithThreshold({
+        value: internalBalance,
+        to: balance,
+        threshold,
       });
     });
   }
