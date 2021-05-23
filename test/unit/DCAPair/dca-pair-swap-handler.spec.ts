@@ -11,7 +11,7 @@ import { readArgFromEvent } from '../../utils/event-utils';
 const MINIMUM_SWAP_INTERVAL = BigNumber.from('60');
 const APPLY_FEE = (bn: BigNumber) => bn.mul(3).div(1000);
 
-describe('DCAPairSwapHandler', () => {
+describe.only('DCAPairSwapHandler', () => {
   let owner: SignerWithAddress;
   let feeRecipient: SignerWithAddress;
   let tokenA: Contract, tokenB: Contract;
@@ -560,9 +560,7 @@ describe('DCAPairSwapHandler', () => {
     nextSwapToPerform,
     lastSwapPerformed,
     initialSwapperBalanceTokenA,
-    approvedTokenA,
     initialSwapperBalanceTokenB,
-    approvedTokenB,
     amountToSwapOfTokenA,
     amountToSwapOfTokenB,
     ratePerUnitBToA,
@@ -574,9 +572,7 @@ describe('DCAPairSwapHandler', () => {
     nextSwapToPerform: BigNumber | number | string;
     lastSwapPerformed: () => BigNumber | number | string;
     initialSwapperBalanceTokenA: BigNumber | number | string;
-    approvedTokenA: BigNumber | number | string;
     initialSwapperBalanceTokenB: BigNumber | number | string;
-    approvedTokenB: BigNumber | number | string;
     amountToSwapOfTokenA: BigNumber | number | string;
     amountToSwapOfTokenB: BigNumber | number | string;
     ratePerUnitBToA: BigNumber | number | string;
@@ -603,10 +599,9 @@ describe('DCAPairSwapHandler', () => {
         });
         await tokenA.transfer(swapper.address, initialSwapperBalanceTokenA);
         await tokenB.transfer(swapper.address, initialSwapperBalanceTokenB);
-        await tokenA.connect(swapper).approve(DCAPairSwapHandler.address, approvedTokenA, { gasPrice: 0 });
-        await tokenB.connect(swapper).approve(DCAPairSwapHandler.address, approvedTokenB, { gasPrice: 0 });
         await tokenA.mint(DCAPairSwapHandler.address, initialPairBalanceTokenA);
         await tokenB.mint(DCAPairSwapHandler.address, initialPairBalanceTokenB);
+        await DCAPairSwapHandler.setInternalBalances(initialPairBalanceTokenA, initialPairBalanceTokenB);
         swapTx = DCAPairSwapHandler.connect(swapper)['swap()']({ gasPrice: 0 });
         await behaviours.waitForTxAndNotThrow(swapTx);
       });
@@ -647,9 +642,7 @@ describe('DCAPairSwapHandler', () => {
       lastSwapPerformed: () => moment().unix() + swapInterval,
       nextSwapToPerform: 2,
       initialSwapperBalanceTokenA: utils.parseEther('1'),
-      approvedTokenA: utils.parseEther('1'),
       initialSwapperBalanceTokenB: utils.parseEther('1'),
-      approvedTokenB: utils.parseEther('1'),
       amountToSwapOfTokenA: utils.parseEther('1'),
       amountToSwapOfTokenB: utils.parseEther('1'),
       ratePerUnitBToA: utils.parseEther('1'),
@@ -657,29 +650,11 @@ describe('DCAPairSwapHandler', () => {
     });
 
     swapTestFailed({
-      title: 'external amount of token a to be provided is not approved',
-      lastSwapPerformed: () => moment().unix() - swapInterval,
-      nextSwapToPerform: 2,
-      initialSwapperBalanceTokenA: utils.parseEther('1'),
-      approvedTokenA: utils.parseEther('1').sub(1),
-      initialSwapperBalanceTokenB: utils.parseEther('0'),
-      approvedTokenB: utils.parseEther('0'),
-      amountToSwapOfTokenA: utils.parseEther('1'),
-      amountToSwapOfTokenB: utils.parseEther('2'),
-      ratePerUnitBToA: utils.parseEther('1'),
-      initialPairBalanceTokenA: utils.parseEther('2'),
-      initialPairBalanceTokenB: utils.parseEther('2'),
-      reason: 'ERC20: transfer amount exceeds allowance',
-    });
-
-    swapTestFailed({
       title: 'external amount of token a to be provided is approved but swapper does not own',
       lastSwapPerformed: () => moment().unix() - swapInterval,
       nextSwapToPerform: 2,
       initialSwapperBalanceTokenA: utils.parseEther('1').sub(1),
-      approvedTokenA: utils.parseEther('1'),
       initialSwapperBalanceTokenB: utils.parseEther('0'),
-      approvedTokenB: utils.parseEther('0'),
       amountToSwapOfTokenA: utils.parseEther('1'),
       amountToSwapOfTokenB: utils.parseEther('2'),
       ratePerUnitBToA: utils.parseEther('1'),
@@ -691,25 +666,7 @@ describe('DCAPairSwapHandler', () => {
       lastSwapPerformed: () => moment().unix() - swapInterval,
       nextSwapToPerform: 2,
       initialSwapperBalanceTokenA: utils.parseEther('0'),
-      approvedTokenA: utils.parseEther('0'),
-      initialSwapperBalanceTokenB: utils.parseEther('1'),
-      approvedTokenB: utils.parseEther('1').sub(1),
-      amountToSwapOfTokenA: utils.parseEther('2'),
-      amountToSwapOfTokenB: utils.parseEther('1'),
-      ratePerUnitBToA: utils.parseEther('1'),
-      initialPairBalanceTokenA: utils.parseEther('2'),
-      initialPairBalanceTokenB: utils.parseEther('2'),
-      reason: 'ERC20: transfer amount exceeds allowance',
-    });
-
-    swapTestFailed({
-      title: 'external amount of token b to be provided is not approved',
-      lastSwapPerformed: () => moment().unix() - swapInterval,
-      nextSwapToPerform: 2,
-      initialSwapperBalanceTokenA: utils.parseEther('0'),
-      approvedTokenA: utils.parseEther('0'),
       initialSwapperBalanceTokenB: utils.parseEther('1').sub(1),
-      approvedTokenB: utils.parseEther('1'),
       amountToSwapOfTokenA: utils.parseEther('2'),
       amountToSwapOfTokenB: utils.parseEther('1'),
       ratePerUnitBToA: utils.parseEther('1'),
@@ -721,9 +678,7 @@ describe('DCAPairSwapHandler', () => {
       lastSwapPerformed: () => moment().unix() - swapInterval,
       nextSwapToPerform: 2,
       initialSwapperBalanceTokenA: utils.parseEther('0'),
-      approvedTokenA: utils.parseEther('0'),
       initialSwapperBalanceTokenB: utils.parseEther('1').sub(1),
-      approvedTokenB: utils.parseEther('1'),
       amountToSwapOfTokenA: utils.parseEther('2'),
       amountToSwapOfTokenB: utils.parseEther('1'),
       ratePerUnitBToA: utils.parseEther('1'),
@@ -735,9 +690,7 @@ describe('DCAPairSwapHandler', () => {
       lastSwapPerformed: () => moment().unix() - swapInterval,
       nextSwapToPerform: 2,
       initialSwapperBalanceTokenA: utils.parseEther('0'),
-      approvedTokenA: utils.parseEther('0'),
       initialSwapperBalanceTokenB: utils.parseEther('1'),
-      approvedTokenB: utils.parseEther('1'),
       amountToSwapOfTokenA: utils.parseEther('2'),
       amountToSwapOfTokenB: utils.parseEther('1'),
       ratePerUnitBToA: utils.parseEther('1'),
@@ -971,7 +924,7 @@ describe('DCAPairSwapHandler', () => {
     let initialLastSwapPerformed: BigNumber;
     let swapTx: TransactionResponse;
 
-    when(title, () => {
+    when.only(title, () => {
       given(async () => {
         await setNextSwapInfo({
           nextSwapToPerform,
@@ -981,14 +934,18 @@ describe('DCAPairSwapHandler', () => {
         });
         await tokenA.transfer(DCAPairSwapHandler.address, initialContractTokenABalance);
         await tokenB.transfer(DCAPairSwapHandler.address, initialContractTokenBBalance);
+        await DCAPairSwapHandler.setInternalBalances(initialContractTokenABalance, initialContractTokenBBalance);
         initialSwapperTokenABalance = await tokenA.balanceOf(owner.address);
         initialSwapperTokenBBalance = await tokenB.balanceOf(owner.address);
         initialLastSwapPerformed = await DCAPairSwapHandler.lastSwapPerformed();
+
+        // Ideally, this would be done by a smart contract on the same tx as the swap
         if (tokenToBeProvidedBySwapper() === tokenA.address) {
-          await tokenA.approve(DCAPairSwapHandler.address, (amountToBeProvidedBySwapper as BigNumber).add(threshold!));
+          await tokenA.transfer(DCAPairSwapHandler.address, (amountToBeProvidedBySwapper as BigNumber).add(threshold!));
         } else {
-          await tokenB.approve(DCAPairSwapHandler.address, (amountToBeProvidedBySwapper as BigNumber).add(threshold!));
+          await tokenB.transfer(DCAPairSwapHandler.address, (amountToBeProvidedBySwapper as BigNumber).add(threshold!));
         }
+
         swapTx = await DCAPairSwapHandler['swap()']();
       });
       then('token to be provided by swapper needed is provided', async () => {
