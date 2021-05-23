@@ -196,8 +196,8 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
 
     if (_totalNecessary > _unswapped) {
       // We need to ask for more funds
-      _balances[address(_from)] += _totalNecessary - _unswapped;
       _from.safeTransferFrom(msg.sender, address(this), _totalNecessary - _unswapped);
+      _balances[address(_from)] += _totalNecessary - _unswapped;
     } else if (_totalNecessary < _unswapped) {
       // We need to return to the owner the amount that won't be used anymore
       _balances[address(_from)] -= _unswapped - _totalNecessary;
