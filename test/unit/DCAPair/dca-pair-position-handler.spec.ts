@@ -22,15 +22,17 @@ describe('DCAPositionHandler', () => {
   let tokenA: Contract, tokenB: Contract;
   let DCAPositionHandlerContract: ContractFactory;
   let DCAPositionHandler: Contract;
-  let DCAFactoryContract: ContractFactory;
-  let DCAFactory: Contract;
+  let DCAGlobalParametersContract: ContractFactory;
+  let DCAGlobalParameters: Contract;
 
   before('Setup accounts and contracts', async () => {
     [owner, approved, stranger, feeRecipient] = await ethers.getSigners();
     DCAPositionHandlerContract = await ethers.getContractFactory(
       'contracts/mocks/DCAPair/DCAPairPositionHandler.sol:DCAPairPositionHandlerMock'
     );
-    DCAFactoryContract = await ethers.getContractFactory('contracts/mocks/DCAFactory/DCAFactory.sol:DCAFactoryMock');
+    DCAGlobalParametersContract = await ethers.getContractFactory(
+      'contracts/mocks/DCAGlobalParameters/DCAGlobalParameters.sol:DCAGlobalParametersMock'
+    );
   });
 
   beforeEach('Deploy and configure', async () => {
@@ -46,8 +48,8 @@ describe('DCAPositionHandler', () => {
       initialAccount: owner.address,
       initialAmount: fromEther(INITIAL_TOKEN_B_BALANCE_USER),
     });
-    DCAFactory = await DCAFactoryContract.deploy(owner.address, feeRecipient.address);
-    DCAPositionHandler = await DCAPositionHandlerContract.deploy(DCAFactory.address, tokenA.address, tokenB.address);
+    DCAGlobalParameters = await DCAGlobalParametersContract.deploy(owner.address, feeRecipient.address);
+    DCAPositionHandler = await DCAPositionHandlerContract.deploy(DCAGlobalParameters.address, tokenA.address, tokenB.address);
     await tokenA.approveInternal(owner.address, DCAPositionHandler.address, fromEther(1000));
     await tokenB.approveInternal(owner.address, DCAPositionHandler.address, fromEther(1000));
     await tokenA.mint(DCAPositionHandler.address, fromEther(INITIAL_TOKEN_A_BALANCE_CONTRACT));
@@ -84,7 +86,7 @@ describe('DCAPositionHandler', () => {
           address: constants.NOT_ZERO_ADDRESS,
           rate: POSITION_RATE_5,
           swaps: POSITION_SWAPS_TO_PERFORM_10,
-          error: 'DCAPair: Invalid deposit address',
+          error: 'DCAPair: invalid deposit address',
         });
       });
     });
@@ -95,7 +97,7 @@ describe('DCAPositionHandler', () => {
           address: tokenA.address,
           rate: 0,
           swaps: POSITION_SWAPS_TO_PERFORM_10,
-          error: 'DCAPair: Invalid rate. It must be positive',
+          error: 'DCAPair: non-positive rate',
         });
       });
     });
@@ -106,7 +108,7 @@ describe('DCAPositionHandler', () => {
           address: tokenA.address,
           rate: POSITION_RATE_5,
           swaps: 0,
-          error: 'DCAPair: Invalid amount of swaps. It must be positive',
+          error: 'DCAPair: non-positive amount',
         });
       });
     });
@@ -180,7 +182,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'withdrawSwapped',
           args: [100],
-          message: 'DCAPair: Invalid position id',
+          message: 'DCAPair: invalid position id',
         });
       });
     });
@@ -273,7 +275,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'withdrawSwappedMany',
           args: [[100]],
-          message: 'DCAPair: Invalid position id',
+          message: 'DCAPair: invalid position id',
         });
       });
     });
@@ -425,7 +427,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'terminate',
           args: [100],
-          message: 'DCAPair: Invalid position id',
+          message: 'DCAPair: invalid position id',
         });
       });
     });
@@ -496,7 +498,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifyRateAndSwaps',
           args: [100, POSITION_RATE_5, POSITION_SWAPS_TO_PERFORM_10],
-          message: 'DCAPair: Invalid position id',
+          message: 'DCAPair: invalid position id',
         });
       });
     });
@@ -509,7 +511,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifyRateAndSwaps',
           args: [dcaId, 0, POSITION_SWAPS_TO_PERFORM_10],
-          message: 'DCAPair: Invalid rate. It must be positive',
+          message: 'DCAPair: non-positive rate',
         });
       });
     });
@@ -522,7 +524,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifyRateAndSwaps',
           args: [dcaId, POSITION_RATE_5, 0],
-          message: 'DCAPair: Invalid amount of swaps. It must be positive',
+          message: 'DCAPair: non-positive amount',
         });
       });
     });
@@ -605,7 +607,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifySwaps',
           args: [100, POSITION_SWAPS_TO_PERFORM_10],
-          message: 'DCAPair: Invalid position id',
+          message: 'DCAPair: invalid position id',
         });
       });
     });
@@ -618,7 +620,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifySwaps',
           args: [dcaId, 0],
-          message: 'DCAPair: Invalid amount of swaps. It must be positive',
+          message: 'DCAPair: non-positive amount',
         });
       });
     });
@@ -660,7 +662,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'addFundsToPosition',
           args: [100, fromEther(EXTRA_AMOUNT_TO_ADD_1), POSITION_SWAPS_TO_PERFORM_10],
-          message: 'DCAPair: Invalid position id',
+          message: 'DCAPair: invalid position id',
         });
       });
     });
@@ -673,7 +675,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'addFundsToPosition',
           args: [dcaId, 0, POSITION_SWAPS_TO_PERFORM_10],
-          message: 'DCAPair: The amount to add must be positive',
+          message: 'DCAPair: non-positive amount',
         });
       });
     });
@@ -697,7 +699,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifyRate',
           args: [100, POSITION_RATE_5],
-          message: 'DCAPair: Invalid position id',
+          message: 'DCAPair: invalid position id',
         });
       });
     });
@@ -710,7 +712,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifyRate',
           args: [dcaId, 0],
-          message: 'DCAPair: Invalid rate. It must be positive',
+          message: 'DCAPair: non-positive rate',
         });
       });
     });
@@ -758,7 +760,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifyRate',
           args: [dcaId, POSITION_RATE_5 + 1],
-          message: 'DCAPair: You cannot modify only the rate of a position that has already been completed',
+          message: 'DCAPair: position completed',
         });
       });
     });
@@ -785,7 +787,7 @@ describe('DCAPositionHandler', () => {
       then('tx is reverted', async () => {
         await behaviours.checkTxRevertedWithMessage({
           tx,
-          message: 'DCAPair: Please withdraw before modifying your position, because you might lose some funds otherwise.',
+          message: 'DCAPair: must withdraw before',
         });
       });
     });
@@ -829,7 +831,7 @@ describe('DCAPositionHandler', () => {
         const { dcaId } = await deposit(tokenA, 1, 1);
 
         // Turn fees to zero
-        await DCAFactory.setFee(0);
+        await DCAGlobalParameters.setFee(0);
 
         // Set up max(uint256) in PERFORMED_SWAPS_10 + 1
         await setRatePerUnit({
@@ -922,7 +924,7 @@ describe('DCAPositionHandler', () => {
       when('fee would overflow', () => {
         when('fee is smaller than precision', () => {
           then('looses the least amount of information', async () => {
-            const feePrecision = await DCAFactory.FEE_PRECISION();
+            const feePrecision = await DCAGlobalParameters.FEE_PRECISION();
             const protocolFee = feePrecision - 1;
             const swapped = await calculateSwappedWith({
               accumRate: constants.MAX_UINT_256,
@@ -936,7 +938,7 @@ describe('DCAPositionHandler', () => {
 
         when('precision is smaller than fee', () => {
           then('looses the least amount of information', async () => {
-            const feePrecision = await DCAFactory.FEE_PRECISION();
+            const feePrecision = await DCAGlobalParameters.FEE_PRECISION();
             const protocolFee = feePrecision + 1;
             const swapped = await calculateSwappedWith({
               accumRate: constants.MAX_UINT_256,
@@ -960,7 +962,7 @@ describe('DCAPositionHandler', () => {
       fee?: number | BigNumber;
     }) {
       const { dcaId } = await deposit(tokenA, 1, 1);
-      if (fee !== undefined) await DCAFactory.setFee(fee);
+      if (fee !== undefined) await DCAGlobalParameters.setFee(fee);
       await DCAPositionHandler.setPerformedSwaps(PERFORMED_SWAPS_10 + 1);
       if (accumRate < 0) {
         await setRatePerUnit({
@@ -1065,7 +1067,7 @@ describe('DCAPositionHandler', () => {
 
       then('operation is reverted', async () => {
         const result: Promise<TransactionResponse> = execute(DCAPositionHandler.connect(stranger), dcaId);
-        await expect(result).to.be.revertedWith('DCAPair: Called must be owner, or approved by owner');
+        await expect(result).to.be.revertedWith('DCAPair: caller not allowed');
       });
     });
   }
@@ -1252,8 +1254,8 @@ describe('DCAPositionHandler', () => {
 
   async function getFeeFrom(value: BigNumberish): Promise<BigNumber> {
     value = BigNumber.from(value) as BigNumber;
-    const feePrecision = await DCAFactory.FEE_PRECISION();
-    const fee = await DCAFactory.fee();
+    const feePrecision = await DCAGlobalParameters.FEE_PRECISION();
+    const fee = await DCAGlobalParameters.fee();
     return value.mul(fee).div(feePrecision).div(100);
   }
 
