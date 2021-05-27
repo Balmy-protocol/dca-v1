@@ -8,38 +8,6 @@ import '../interfaces/ISlidingOracle.sol';
 import '../interfaces/IDCAPairSwapCallee.sol';
 import './DCAPairParameters.sol';
 
-interface IDCAPairSwapHandler {
-  struct NextSwapInformation {
-    uint32 swapToPerform;
-    uint256 amountToSwapTokenA;
-    uint256 amountToSwapTokenB;
-    uint256 ratePerUnitBToA;
-    uint256 ratePerUnitAToB;
-    uint256 platformFeeTokenA;
-    uint256 platformFeeTokenB;
-    uint256 amountToBeProvidedBySwapper;
-    uint256 amountToRewardSwapperWith;
-    IERC20Detailed tokenToBeProvidedBySwapper;
-    IERC20Detailed tokenToRewardSwapperWith;
-  }
-
-  event Swapped(NextSwapInformation _nextSwapInformation);
-
-  function swapInterval() external view returns (uint32);
-
-  function lastSwapPerformed() external view returns (uint256);
-
-  function swapAmountAccumulator(address) external view returns (uint256);
-
-  function oracle() external returns (ISlidingOracle);
-
-  function getNextSwapInfo() external view returns (NextSwapInformation memory _nextSwapInformation);
-
-  function swap() external;
-
-  function swap(address _to, bytes calldata _data) external;
-}
-
 abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
   using SafeERC20 for IERC20Detailed;
 
@@ -107,7 +75,7 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
     uint256 _amountOfTokenAIfTokenBSwapped =
       _convertTo(_magnitudeB, _nextSwapInformation.amountToSwapTokenB, _nextSwapInformation.ratePerUnitBToA);
 
-    // TODO: We are calling _getFeeFromAmount (which makes a call to the factory) a lot. See if we can call the factory only once
+    // TODO: We are calling _getFeeFromAmount (which makes a call to the global parameters) a lot. See if we can call the global parameters only once
     if (_amountOfTokenAIfTokenBSwapped < _nextSwapInformation.amountToSwapTokenA) {
       _nextSwapInformation.tokenToBeProvidedBySwapper = tokenB;
       _nextSwapInformation.tokenToRewardSwapperWith = tokenA;
@@ -175,10 +143,7 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
       uint256 _balanceAfter = _nextSwapInformation.tokenToBeProvidedBySwapper.balanceOf(address(this));
 
       // Make sure that they sent the tokens back
-      require(
-        _balanceAfter >= _balanceBefore + _nextSwapInformation.amountToBeProvidedBySwapper,
-        'DCAPair: callee did not provide the expected liquidity'
-      );
+      require(_balanceAfter >= _balanceBefore + _nextSwapInformation.amountToBeProvidedBySwapper, 'DCAPair: not enough liquidity');
     } else if (_nextSwapInformation.amountToBeProvidedBySwapper > 0) {
       _nextSwapInformation.tokenToBeProvidedBySwapper.safeTransferFrom(
         msg.sender,
@@ -189,8 +154,9 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
     }
 
     // Send fees
-    tokenA.safeTransfer(factory.feeRecipient(), _nextSwapInformation.platformFeeTokenA);
-    tokenB.safeTransfer(factory.feeRecipient(), _nextSwapInformation.platformFeeTokenB);
+    address _feeRecipient = globalParameters.feeRecipient();
+    tokenA.safeTransfer(_feeRecipient, _nextSwapInformation.platformFeeTokenA);
+    tokenB.safeTransfer(_feeRecipient, _nextSwapInformation.platformFeeTokenB);
     emit Swapped(_nextSwapInformation);
   }
 }

@@ -5,42 +5,6 @@ import './DCAPairParameters.sol';
 import './ERC721/ERC721.sol';
 import '../utils/Math.sol';
 
-interface IDCAPairPositionHandler {
-  event Terminated(address indexed _user, uint256 _dcaId, uint256 _returnedUnswapped, uint256 _returnedSwapped);
-  event Deposited(address indexed _user, uint256 _dcaId, address _fromToken, uint192 _rate, uint32 _startingSwap, uint32 _lastSwap);
-  event Withdrew(address indexed _user, uint256 _dcaId, address _token, uint256 _amount);
-  event WithdrewMany(address indexed _user, uint256[] _dcaIds, uint256 _swappedTokenA, uint256 _swappedTokenB);
-  event Modified(address indexed _user, uint256 _dcaId, uint192 _rate, uint32 _startingSwap, uint32 _lastSwap);
-
-  function deposit(
-    address _tokenAddress,
-    uint192 _rate,
-    uint32 _amountOfSwaps
-  ) external returns (uint256 _dcaId);
-
-  function withdrawSwapped(uint256 _dcaId) external returns (uint256 _swapped);
-
-  function withdrawSwappedMany(uint256[] calldata _dcaIds) external returns (uint256 _swappedTokenA, uint256 _swappedTokenB);
-
-  function modifyRate(uint256 _dcaId, uint192 _newRate) external;
-
-  function modifySwaps(uint256 _dcaId, uint32 _newSwaps) external;
-
-  function modifyRateAndSwaps(
-    uint256 _dcaId,
-    uint192 _newRate,
-    uint32 _newSwaps
-  ) external;
-
-  function addFundsToPosition(
-    uint256 _dcaId,
-    uint256 _amount,
-    uint32 _newSwaps
-  ) external;
-
-  function terminate(uint256 _dcaId) external;
-}
-
 abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionHandler, ERC721 {
   using SafeERC20 for IERC20Detailed;
 
@@ -55,7 +19,7 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
     uint192 _rate,
     uint32 _amountOfSwaps
   ) public override returns (uint256) {
-    require(_tokenAddress == address(tokenA) || _tokenAddress == address(tokenB), 'DCAPair: Invalid deposit address');
+    require(_tokenAddress == address(tokenA) || _tokenAddress == address(tokenB), 'DCAPair: invalid deposit address');
     IERC20Detailed _from = _tokenAddress == address(tokenA) ? tokenA : tokenB;
     uint256 _amount = _rate * _amountOfSwaps;
     _from.safeTransferFrom(msg.sender, address(this), _amount);
@@ -136,7 +100,7 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
     _assertPositionExistsAndCanBeOperatedByCaller(_dcaId);
 
     uint32 _swapsLeft = userPositions[_dcaId].lastSwap - performedSwaps;
-    require(_swapsLeft > 0, 'DCAPair: You cannot modify only the rate of a position that has already been completed');
+    require(_swapsLeft > 0, 'DCAPair: position completed');
 
     modifyRateAndSwaps(_dcaId, _newRate, _swapsLeft);
   }
@@ -166,7 +130,7 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
     uint32 _newSwaps
   ) public override {
     _assertPositionExistsAndCanBeOperatedByCaller(_dcaId);
-    require(_amount > 0, 'DCAPair: The amount to add must be positive');
+    require(_amount > 0, 'DCAPair: non-positive amount');
 
     uint256 _unswapped = _calculateUnswapped(_dcaId);
     uint256 _total = _unswapped + _amount;
@@ -186,10 +150,7 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
 
     // We will store the swapped amount without the fee. The fee will be applied during withdraw/terminate
     uint256 _swapped = _calculateSwapped(_dcaId, false);
-    require(
-      _swapped <= type(uint248).max,
-      'DCAPair: Please withdraw before modifying your position, because you might lose some funds otherwise.'
-    );
+    require(_swapped <= type(uint248).max, 'DCAPair: must withdraw before'); // You should withdraw before modifying, to avoid loosing funds
 
     _removePosition(_dcaId);
     (uint32 _startingSwap, uint32 _finalSwap) = _addPosition(_dcaId, address(_from), _newRate, _newAmountOfSwaps, uint248(_swapped));
@@ -208,8 +169,8 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
   }
 
   function _assertPositionExistsAndCanBeOperatedByCaller(uint256 _dcaId) internal view {
-    require(userPositions[_dcaId].rate > 0, 'DCAPair: Invalid position id');
-    require(_isApprovedOrOwner(msg.sender, _dcaId), 'DCAPair: Called must be owner, or approved by owner');
+    require(userPositions[_dcaId].rate > 0, 'DCAPair: invalid position id');
+    require(_isApprovedOrOwner(msg.sender, _dcaId), 'DCAPair: caller not allowed');
   }
 
   function _addPosition(
@@ -219,8 +180,8 @@ abstract contract DCAPairPositionHandler is DCAPairParameters, IDCAPairPositionH
     uint32 _amountOfSwaps,
     uint248 _swappedBeforeModified
   ) internal returns (uint32 _startingSwap, uint32 _finalSwap) {
-    require(_rate > 0, 'DCAPair: Invalid rate. It must be positive');
-    require(_amountOfSwaps > 0, 'DCAPair: Invalid amount of swaps. It must be positive');
+    require(_rate > 0, 'DCAPair: non-positive rate');
+    require(_amountOfSwaps > 0, 'DCAPair: non-positive amount');
     _startingSwap = performedSwaps + 1;
     _finalSwap = performedSwaps + _amountOfSwaps;
     swapAmountDelta[_from][_startingSwap] += int192(_rate);

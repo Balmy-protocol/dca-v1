@@ -6,15 +6,14 @@ import './DCAPairParameters.sol';
 import './DCAPairPositionHandler.sol';
 import './DCAPairSwapHandler.sol';
 
-interface IDCAPair is IDCAPairParameters, IDCAPairSwapHandler, IDCAPairPositionHandler {}
-
 contract DCAPair is DCAPairParameters, DCAPairSwapHandler, DCAPairPositionHandler, IDCAPair {
   constructor(
+    IDCAGlobalParameters _globalParameters,
     IERC20Detailed _tokenA,
     IERC20Detailed _tokenB,
     uint32 _swapInterval
   )
-    DCAPairParameters(IDCAFactory(msg.sender), _tokenA, _tokenB)
+    DCAPairParameters(_globalParameters, _tokenA, _tokenB)
     DCAPairSwapHandler(ISlidingOracle(address(0xe)), _swapInterval)
     DCAPairPositionHandler(_tokenA, _tokenB)
   {}
