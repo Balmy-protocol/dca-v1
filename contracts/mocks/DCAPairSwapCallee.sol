@@ -22,6 +22,8 @@ contract DCAPairSwapCalleeMock is IDCAPairSwapCallee {
   // solhint-disable-next-line func-name-mixedcase
   function DCAPairSwapCall(
     address _sender,
+    uint256 _amountBorrowedTokenA,
+    uint256 _amountBorrowedTokenB,
     IERC20Detailed _rewardToken,
     uint256 _rewardAmount,
     IERC20Detailed _tokenToProvide,

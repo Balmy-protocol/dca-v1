@@ -388,6 +388,8 @@ describe('DCAPairSwapHandler', () => {
     ratePerUnitAToB: BigNumber;
     platformFeeTokenA: BigNumber;
     platformFeeTokenB: BigNumber;
+    availableToBorrowTokenA: BigNumber;
+    availableToBorrowTokenB: BigNumber;
     amountToBeProvidedBySwapper: BigNumber;
     amountToRewardSwapperWith: BigNumber;
     tokenToBeProvidedBySwapper: string;
@@ -423,7 +425,7 @@ describe('DCAPairSwapHandler', () => {
     } = calculateSwapDetails(ratePerUnitBToA, amountToSwapOfTokenB, amountToSwapOfTokenA);
 
     let nextSwapInfo: NextSwapInfo;
-    when(title, () => {
+    when.only(title, () => {
       given(async () => {
         await setNextSwapInfo({
           nextSwapToPerform,
@@ -431,6 +433,7 @@ describe('DCAPairSwapHandler', () => {
           amountToSwapOfTokenB,
           ratePerUnitBToA,
         });
+        await DCAPairSwapHandler.setInternalBalances((amountToSwapOfTokenA as BigNumber).mul(2), (amountToSwapOfTokenB as BigNumber).mul(2));
         nextSwapInfo = await DCAPairSwapHandler.getNextSwapInfo();
       });
       then('swap to perform is current + 1', () => {
@@ -481,6 +484,22 @@ describe('DCAPairSwapHandler', () => {
       });
       then('token to reward swapper with is correct', async () => {
         expect(nextSwapInfo.tokenToRewardSwapperWith).to.be.equal(tokenToRewardSwapperWith());
+      });
+      then('amount to borrow token a is correct', async () => {
+        const balanceA = await DCAPairSwapHandler.internalBalanceOf(tokenA.address);
+        if (tokenToRewardSwapperWith() === tokenA.address) {
+          expect(nextSwapInfo.availableToBorrowTokenA).to.be.equal(balanceA.sub(nextSwapInfo.amountToRewardSwapperWith));
+        } else {
+          expect(nextSwapInfo.availableToBorrowTokenA).to.be.equal(balanceA);
+        }
+      });
+      then('amount to borrow token b is correct', async () => {
+        const balanceB = await DCAPairSwapHandler.internalBalanceOf(tokenB.address);
+        if (tokenToRewardSwapperWith() === tokenB.address) {
+          expect(nextSwapInfo.availableToBorrowTokenB).to.be.equal(balanceB.sub(nextSwapInfo.amountToRewardSwapperWith));
+        } else {
+          expect(nextSwapInfo.availableToBorrowTokenB).to.be.equal(balanceB);
+        }
       });
       then('fees are no more than expected', () => {
         const expectedFeesTokenA = APPLY_FEE(amountToSwapOfTokenA as BigNumber);
