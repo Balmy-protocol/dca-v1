@@ -40,12 +40,14 @@ describe('DCAPositionHandler', () => {
     tokenA = await erc20.deploy({
       name: 'DAI',
       symbol: 'DAI',
+      decimals: 12,
       initialAccount: owner.address,
       initialAmount: INITIAL_TOKEN_A_BALANCE_USER,
     });
     tokenB = await erc20.deploy({
       name: 'WBTC',
       symbol: 'WBTC',
+      decimals: 16,
       initialAccount: owner.address,
       initialAmount: INITIAL_TOKEN_B_BALANCE_USER,
     });
@@ -972,7 +974,7 @@ describe('DCAPositionHandler', () => {
       await DCAPositionHandler.setPerformedSwaps(PERFORMED_SWAPS_10 + 1);
       if (accumRate < 0) {
         await setRatePerUnit({
-          accumRate: BigNumber.isBigNumber(accumRate) ? accumRate.abs() : tokenA.asUnits(Math.abs(accumRate)),
+          accumRate: BigNumber.isBigNumber(accumRate) ? accumRate.abs() : tokenB.asUnits(Math.abs(accumRate)),
           rateMultiplier: 0,
           onSwap: PERFORMED_SWAPS_10,
         });
@@ -1172,7 +1174,7 @@ describe('DCAPositionHandler', () => {
     const fromTokenReal = fromToken ?? tokenA;
     const toToken = fromTokenReal === tokenA ? tokenB : tokenA;
     await DCAPositionHandler.setPerformedSwaps(swap);
-    await DCAPositionHandler.setRatePerUnit(fromTokenReal.address, swap, fromTokenReal.asUnits(ratePerUnit), 0);
+    await DCAPositionHandler.setRatePerUnit(fromTokenReal.address, swap, toToken.asUnits(ratePerUnit), 0);
     await fromTokenReal.burn(DCAPositionHandler.address, fromTokenReal.asUnits(amount));
     await toToken.mint(DCAPositionHandler.address, await withFeeApplied(toToken.asUnits(amount * ratePerUnit))); // We calculate and subtract the fee, similarly to how it would be when not unit tested
     await DCAPositionHandler.setInternalBalances(
