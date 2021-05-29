@@ -1029,7 +1029,7 @@ describe('DCAPositionHandler', () => {
     await DCAPositionHandler.setRatePerUnit(
       tokenA.address,
       onSwap,
-      BigNumber.isBigNumber(accumRate) ? accumRate : tokenA.asUnits(accumRate),
+      BigNumber.isBigNumber(accumRate) ? accumRate : tokenB.asUnits(accumRate),
       rateMultiplier
     );
   }
