@@ -631,8 +631,8 @@ describe('DCAPairSwapHandler', () => {
       let swapTx: Promise<TransactionResponse>;
       let staticLastSwapPerformed = lastSwapPerformed();
       given(async () => {
-        initialPairBalanceTokenA = initialPairBalanceTokenA ?? BigNumber.from(0);
-        initialPairBalanceTokenB = initialPairBalanceTokenB ?? BigNumber.from(0);
+        initialPairBalanceTokenA = initialPairBalanceTokenA ?? amountToSwapOfTokenA;
+        initialPairBalanceTokenB = initialPairBalanceTokenB ?? amountToSwapOfTokenB;
 
         swapper = await (await wallet.generateRandom()).connect(ethers.provider);
         await DCAPairSwapHandler.setLastSwapPerformed(staticLastSwapPerformed);
@@ -696,7 +696,7 @@ describe('DCAPairSwapHandler', () => {
     });
 
     swapTestFailed({
-      title: 'external amount of token a to be provided is approved but swapper does not own',
+      title: 'external amount of token a to be provided is not sent',
       lastSwapPerformed: () => moment().unix() - swapInterval,
       nextSwapToPerform: 2,
       initialSwapperBalanceTokenA: utils.parseEther('1').sub(1),
@@ -704,11 +704,11 @@ describe('DCAPairSwapHandler', () => {
       amountToSwapOfTokenA: utils.parseEther('1'),
       amountToSwapOfTokenB: utils.parseEther('2'),
       ratePerUnitBToA: utils.parseEther('1'),
-      reason: 'ERC20: transfer amount exceeds balance',
+      reason: 'DCAPair: liquidity not returned',
     });
 
     swapTestFailed({
-      title: 'external amount of token b to be provided is not approved',
+      title: 'external amount of token b to be provided is not sent',
       lastSwapPerformed: () => moment().unix() - swapInterval,
       nextSwapToPerform: 2,
       initialSwapperBalanceTokenA: utils.parseEther('0'),
@@ -716,19 +716,7 @@ describe('DCAPairSwapHandler', () => {
       amountToSwapOfTokenA: utils.parseEther('2'),
       amountToSwapOfTokenB: utils.parseEther('1'),
       ratePerUnitBToA: utils.parseEther('1'),
-      reason: 'ERC20: transfer amount exceeds balance',
-    });
-
-    swapTestFailed({
-      title: 'external amount of token b to be provided is approved but swapper does not own',
-      lastSwapPerformed: () => moment().unix() - swapInterval,
-      nextSwapToPerform: 2,
-      initialSwapperBalanceTokenA: utils.parseEther('0'),
-      initialSwapperBalanceTokenB: utils.parseEther('1').sub(1),
-      amountToSwapOfTokenA: utils.parseEther('2'),
-      amountToSwapOfTokenB: utils.parseEther('1'),
-      ratePerUnitBToA: utils.parseEther('1'),
-      reason: 'ERC20: transfer amount exceeds balance',
+      reason: 'DCAPair: liquidity not returned',
     });
 
     swapTestFailed({
@@ -737,10 +725,12 @@ describe('DCAPairSwapHandler', () => {
       nextSwapToPerform: 2,
       initialSwapperBalanceTokenA: utils.parseEther('0'),
       initialSwapperBalanceTokenB: utils.parseEther('1'),
+      initialPairBalanceTokenA: utils.parseEther('0'),
+      initialPairBalanceTokenB: utils.parseEther('0'),
       amountToSwapOfTokenA: utils.parseEther('2'),
       amountToSwapOfTokenB: utils.parseEther('1'),
       ratePerUnitBToA: utils.parseEther('1'),
-      reason: 'ERC20: transfer amount exceeds balance',
+      reason: `Transaction reverted and Hardhat couldn't infer the reason.`, // TODO: change when Hardhat detects underflows correctly
     });
 
     swapTest({
