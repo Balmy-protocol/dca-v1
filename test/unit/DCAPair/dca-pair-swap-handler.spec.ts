@@ -484,7 +484,7 @@ describe('DCAPairSwapHandler', () => {
       then('token to reward swapper with is correct', async () => {
         expect(nextSwapInfo.tokenToRewardSwapperWith).to.be.equal(tokenToRewardSwapperWith());
       });
-      then('amount to borrow token a is correct', async () => {
+      then('available to borrow token a is correct', async () => {
         const balanceA = await DCAPairSwapHandler.internalBalanceOf(tokenA.address);
         if (tokenToRewardSwapperWith() === tokenA.address) {
           expect(nextSwapInfo.availableToBorrowTokenA).to.be.equal(balanceA.sub(nextSwapInfo.amountToRewardSwapperWith));
@@ -492,7 +492,7 @@ describe('DCAPairSwapHandler', () => {
           expect(nextSwapInfo.availableToBorrowTokenA).to.be.equal(balanceA);
         }
       });
-      then('amount to borrow token b is correct', async () => {
+      then('available to borrow token b is correct', async () => {
         const balanceB = await DCAPairSwapHandler.internalBalanceOf(tokenB.address);
         if (tokenToRewardSwapperWith() === tokenB.address) {
           expect(nextSwapInfo.availableToBorrowTokenB).to.be.equal(balanceB.sub(nextSwapInfo.amountToRewardSwapperWith));
