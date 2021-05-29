@@ -839,7 +839,7 @@ describe('DCAPairSwapHandler', () => {
     // });
   });
 
-  describe.only('flash swap', () => {
+  describe('flash swap', () => {
     const BYTES = ethers.utils.randomBytes(5);
     const [CALLEE_TOKEN_A_INITIAL_BALANCE, CALLEE_TOKEN_B_INITIAL_BALANCE] = [utils.parseEther('2'), utils.parseEther('2')];
     const [PAIR_TOKEN_A_INITIAL_BALANCE, PAIR_TOKEN_B_INITIAL_BALANCE] = [utils.parseEther('2'), utils.parseEther('2')];
@@ -905,7 +905,7 @@ describe('DCAPairSwapHandler', () => {
       });
     });
 
-    when.only('flash swaps are used', () => {
+    when('flash swaps are used', () => {
       given(async () => {
         await DCAPairSwapHandler['swap(uint256,uint256,address,bytes)'](
           availableToBorrowTokenA,
