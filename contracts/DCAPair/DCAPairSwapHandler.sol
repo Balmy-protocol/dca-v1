@@ -160,11 +160,12 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
       // Make call
       IDCAPairSwapCallee(_to).DCAPairSwapCall(
         msg.sender,
+        tokenA,
+        tokenB,
         _amountToBorrowTokenA,
         _amountToBorrowTokenB,
-        _nextSwapInformation.tokenToRewardSwapperWith,
+        _nextSwapInformation.tokenToRewardSwapperWith == tokenA,
         _nextSwapInformation.amountToRewardSwapperWith,
-        _nextSwapInformation.tokenToBeProvidedBySwapper,
         _nextSwapInformation.amountToBeProvidedBySwapper,
         _data
       );
