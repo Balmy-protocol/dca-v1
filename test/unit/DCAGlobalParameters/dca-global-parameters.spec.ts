@@ -115,7 +115,7 @@ describe('DCAGlobalParameters', function () {
 
     behaviours.shouldBeExecutableOnlyByGovernor({
       contract: () => DCAGlobalParameters,
-      funcAndSignature: 'setFeeRecipient(address)',
+      funcAndSignature: 'setNFTDescriptor(address)',
       params: [constants.NOT_ZERO_ADDRESS],
       governor: () => owner,
     });
