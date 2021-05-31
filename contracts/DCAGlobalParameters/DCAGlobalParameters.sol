@@ -26,16 +26,16 @@ contract DCAGlobalParameters is IDCAGlobalParameters, Governable {
     emit FeeRecipientSet(_feeRecipient);
   }
 
-  function setSwapFee(uint32 _fee) public override onlyGovernor {
+  function setSwapFee(uint32 _swapFee) public override onlyGovernor {
     require(_fee <= MAX_FEE, 'DCAGParameters: fee too high');
-    swapFee = _fee;
-    emit SwapFeeSet(_fee);
+    swapFee = _swapFee;
+    emit SwapFeeSet(_swapFee);
   }
 
-  function setLoanFee(uint32 _fee) public override onlyGovernor {
-    require(_fee <= MAX_FEE, 'DCAGParameters: fee too high');
-    loanFee = _fee;
-    emit LoanFeeSet(_fee);
+  function setLoanFee(uint32 _loanFee) public override onlyGovernor {
+    require(_loanFee <= MAX_FEE, 'DCAGParameters: fee too high');
+    loanFee = _loanFee;
+    emit LoanFeeSet(_loanFee);
   }
 
   function addSwapIntervalsToAllowedList(uint32[] calldata _swapIntervals, string[] calldata _descriptions) public override onlyGovernor {
