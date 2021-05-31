@@ -13,14 +13,14 @@ import '../interfaces/IDCAPair.sol';
 
 abstract contract DCAPairParameters is IDCAPairParameters {
   // Internal constants
-  uint256 internal _magnitudeA;
-  uint256 internal _magnitudeB;
+  uint256 internal immutable _magnitudeA;
+  uint256 internal immutable _magnitudeB;
   uint24 internal immutable _feePrecision;
 
   // Basic setup
-  IDCAGlobalParameters public override globalParameters;
-  IERC20Detailed public override tokenA;
-  IERC20Detailed public override tokenB;
+  IDCAGlobalParameters public immutable override globalParameters;
+  IERC20Detailed public immutable override tokenA;
+  IERC20Detailed public immutable override tokenB;
 
   // Tracking
   mapping(address => mapping(uint32 => int256)) public override swapAmountDelta;
