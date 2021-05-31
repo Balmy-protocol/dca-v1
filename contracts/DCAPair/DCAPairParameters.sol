@@ -18,9 +18,9 @@ abstract contract DCAPairParameters is IDCAPairParameters {
   uint24 internal immutable _feePrecision;
 
   // Basic setup
-  IDCAGlobalParameters public immutable override globalParameters;
-  IERC20Detailed public immutable override tokenA;
-  IERC20Detailed public immutable override tokenB;
+  IDCAGlobalParameters public override globalParameters;
+  IERC20Detailed public override tokenA;
+  IERC20Detailed public override tokenB;
 
   // Tracking
   mapping(address => mapping(uint32 => int256)) public override swapAmountDelta;
