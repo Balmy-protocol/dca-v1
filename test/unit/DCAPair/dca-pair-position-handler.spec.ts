@@ -19,7 +19,7 @@ describe('DCAPositionHandler', () => {
   const INITIAL_TOKEN_B_BALANCE_CONTRACT = 100;
   const INITIAL_TOKEN_B_BALANCE_USER = 100;
 
-  let owner: SignerWithAddress, approved: SignerWithAddress, stranger: SignerWithAddress, feeRecipient: SignerWithAddress;
+  let owner: SignerWithAddress, approved: SignerWithAddress, stranger: SignerWithAddress;
   let tokenA: TokenContract, tokenB: TokenContract;
   let DCAPositionHandlerContract: ContractFactory;
   let DCAPositionHandler: Contract;
@@ -27,7 +27,7 @@ describe('DCAPositionHandler', () => {
   let DCAGlobalParameters: Contract;
 
   before('Setup accounts and contracts', async () => {
-    [owner, approved, stranger, feeRecipient] = await ethers.getSigners();
+    [owner, approved, stranger] = await ethers.getSigners();
     DCAPositionHandlerContract = await ethers.getContractFactory(
       'contracts/mocks/DCAPair/DCAPairPositionHandler.sol:DCAPairPositionHandlerMock'
     );
@@ -51,7 +51,7 @@ describe('DCAPositionHandler', () => {
       initialAccount: owner.address,
       initialAmount: INITIAL_TOKEN_B_BALANCE_USER,
     });
-    DCAGlobalParameters = await DCAGlobalParametersContract.deploy(owner.address, feeRecipient.address);
+    DCAGlobalParameters = await DCAGlobalParametersContract.deploy(owner.address, constants.NOT_ZERO_ADDRESS, constants.NOT_ZERO_ADDRESS);
     DCAPositionHandler = await DCAPositionHandlerContract.deploy(DCAGlobalParameters.address, tokenA.address, tokenB.address);
     await tokenA.approveInternal(owner.address, DCAPositionHandler.address, tokenA.asUnits(1000));
     await tokenB.approveInternal(owner.address, DCAPositionHandler.address, tokenB.asUnits(1000));
