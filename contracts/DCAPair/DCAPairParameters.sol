@@ -45,11 +45,6 @@ abstract contract DCAPairParameters is IDCAPairParameters {
     _magnitudeB = 10**_tokenB.decimals();
   }
 
-  function _getSwapFeeFromAmount(uint256 _amount) internal view returns (uint256) {
-    uint32 _protocolFee = globalParameters.swapFee();
-    return _getFeeFromAmount(_protocolFee, _amount);
-  }
-
   function _getFeeFromAmount(uint32 _feeAmount, uint256 _amount) internal pure returns (uint256) {
     (bool _ok, uint256 _fee) = Math.tryMul(_amount, _feeAmount);
     if (_ok) {
