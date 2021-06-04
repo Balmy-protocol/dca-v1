@@ -1,9 +1,10 @@
 import { expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chai from 'chai';
-import { Contract, ContractFactory, ContractInterface, Signer, Wallet } from 'ethers';
+import { Contract, ContractFactory, ContractInterface, ethers, Signer, Wallet } from 'ethers';
+import { ethers as hardhatEhters } from 'hardhat';
 import { TransactionResponse } from '@ethersproject/abstract-provider';
-import { getStatic } from 'ethers/lib/utils';
+import { getStatic, ParamType } from 'ethers/lib/utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { given, then, when } from './bdd';
 import { wallet } from '.';
@@ -250,6 +251,50 @@ const shouldBeExecutableOnlyByPendingGovernor = ({
   });
 };
 
+const encodeParameters = (types: string[], values: any[]) => {
+  const abi = new ethers.utils.AbiCoder();
+  return abi.encode(types, values);
+};
+
+const shouldBeReentrancyGuarded = ({
+  contract,
+  funcAndSignature,
+  params,
+  paramsTypes,
+}: {
+  contract: () => Contract;
+  funcAndSignature: string;
+  params?: any[];
+  paramsTypes?: string[];
+}) => {
+  params = params ?? [];
+  paramsTypes = paramsTypes ?? [];
+  let proxyContract: Contract;
+  given(async () => {
+    const proxyFactory = await hardhatEhters.getContractFactory('contracts/mocks/Proxy.sol:Proxy');
+    proxyContract = await proxyFactory.deploy();
+  });
+  when('trying to do a reentrancy attack', () => {
+    let attackingTx: Promise<TransactionResponse>;
+    given(async () => {
+      const encodedParameters = encodeParameters(paramsTypes!, params!);
+      attackingTx = proxyContract.executeDoubleTransaction(contract().address, funcAndSignature, encodedParameters, { gasPrice: 0 });
+    });
+    then('tx is reverted with reason', async () => {
+      await expect(attackingTx).to.be.revertedWith('reentrant attack stopped');
+    });
+  });
+  when('not trying to do a reentrancy attack', () => {
+    let nonAttackingTx: Promise<TransactionResponse>;
+    given(async () => {
+      nonAttackingTx = contract()[funcAndSignature](...params!, { gasPrice: 0 });
+    });
+    then('tx is not reverted or not reverted with reason reentrant attack stopped', async () => {
+      await expect(nonAttackingTx).to.not.be.revertedWith('reentrant attack stopped');
+    });
+  });
+};
+
 const waitForTxAndNotThrow = (tx: Promise<TransactionResponse>): Promise<any> => {
   return new Promise((resolve) => {
     tx.then(resolve).catch(resolve);
@@ -268,4 +313,5 @@ export default {
   waitForTxAndNotThrow,
   shouldBeExecutableOnlyByGovernor,
   shouldBeExecutableOnlyByPendingGovernor,
+  shouldBeReentrancyGuarded,
 };

@@ -2,13 +2,13 @@
 pragma solidity 0.8.4;
 pragma abicoder v2;
 
-import 'hardhat/console.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 import '../interfaces/ISlidingOracle.sol';
 import '../interfaces/IDCAPairSwapCallee.sol';
 import './DCAPairParameters.sol';
 
-abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
+abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCAPairSwapHandler {
   using SafeERC20 for IERC20Detailed;
 
   uint32 internal constant _MINIMUM_SWAP_INTERVAL = 1 minutes;
@@ -119,7 +119,7 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
     uint256 _amountToBorrowTokenB,
     address _to,
     bytes memory _data
-  ) public override {
+  ) public override nonReentrant {
     require(lastSwapPerformed <= block.timestamp - swapInterval, 'DCAPair: within swap interval');
     NextSwapInformation memory _nextSwapInformation = getNextSwapInfo();
 
