@@ -755,6 +755,16 @@ describe('DCAPairSwapHandler', () => {
     });
 
     swapTest({
+      title: 'rate per unit is 1:1 and needing token b to be provided externally',
+      nextSwapToPerform: 2,
+      initialContractTokenABalance: 100,
+      initialContractTokenBBalance: 100,
+      amountToSwapOfTokenA: 1.4,
+      amountToSwapOfTokenB: 1.3,
+      ratePerUnitBToA: 1,
+    });
+
+    swapTest({
       title: 'rate per unit is 1:1 and needing token a to be provided externally',
       nextSwapToPerform: 2,
       initialContractTokenABalance: 100,
