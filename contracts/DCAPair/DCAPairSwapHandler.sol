@@ -120,7 +120,7 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
     address _to,
     bytes memory _data
   ) public override {
-    require(lastSwapPerformed <= block.timestamp - swapInterval, 'DCAPair: within swap interval');
+    require(lastSwapPerformed / swapInterval < _getTimestamp() / swapInterval, 'DCAPair: within interval slot');
     NextSwapInformation memory _nextSwapInformation = getNextSwapInfo();
 
     _registerSwap(
@@ -193,5 +193,9 @@ abstract contract DCAPairSwapHandler is DCAPairParameters, IDCAPairSwapHandler {
 
     // Emit event
     emit Swapped(msg.sender, _to, _amountToBorrowTokenA, _amountToBorrowTokenB, _nextSwapInformation);
+  }
+
+  function _getTimestamp() internal view virtual returns (uint256 _blockTimestamp) {
+    _blockTimestamp = block.timestamp;
   }
 }

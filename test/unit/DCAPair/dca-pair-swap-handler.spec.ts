@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { expect } from 'chai';
-import { BigNumber, BigNumberish, Contract, ContractFactory, utils, Wallet } from 'ethers';
+import { BigNumber, Contract, ContractFactory, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 import { TransactionResponse } from '@ethersproject/abstract-provider';
 import { constants, erc20, behaviours, evm, bn, wallet } from '../../utils';
@@ -600,6 +600,7 @@ describe('DCAPairSwapHandler', () => {
   const swapTestFailed = ({
     title,
     nextSwapToPerform,
+    blockTimestamp,
     lastSwapPerformed,
     initialSwapperBalanceTokenA,
     initialSwapperBalanceTokenB,
@@ -612,7 +613,8 @@ describe('DCAPairSwapHandler', () => {
   }: {
     title: string;
     nextSwapToPerform: BigNumber | number | string;
-    lastSwapPerformed: () => BigNumber | number | string;
+    blockTimestamp?: number;
+    lastSwapPerformed?: number;
     initialSwapperBalanceTokenA: BigNumber | number | string | (() => BigNumber | number | string);
     initialSwapperBalanceTokenB: BigNumber | number | string | (() => BigNumber | number | string);
     amountToSwapOfTokenA: BigNumber | number | string;
@@ -626,8 +628,9 @@ describe('DCAPairSwapHandler', () => {
     when(title, () => {
       let swapper: Wallet;
       let swapTx: Promise<TransactionResponse>;
-      let staticLastSwapPerformed = lastSwapPerformed();
+      let staticLastSwapPerformed: number;
       given(async () => {
+        staticLastSwapPerformed = lastSwapPerformed ?? 0;
         initialSwapperBalanceTokenA =
           typeof initialSwapperBalanceTokenA === 'function' ? initialSwapperBalanceTokenA() : initialSwapperBalanceTokenA;
         initialSwapperBalanceTokenB =
@@ -639,6 +642,9 @@ describe('DCAPairSwapHandler', () => {
         initialPairBalanceTokenA = initialPairBalanceTokenA !== undefined ? toBN(initialPairBalanceTokenA, tokenA) : amountToSwapOfTokenA;
         initialPairBalanceTokenB = initialPairBalanceTokenB !== undefined ? toBN(initialPairBalanceTokenB, tokenB) : amountToSwapOfTokenB;
         ratePerUnitBToA = toBN(ratePerUnitBToA, tokenA);
+        if (blockTimestamp) {
+          await DCAPairSwapHandler.setBlockTimestamp(blockTimestamp);
+        }
         swapper = await (await wallet.generateRandom()).connect(ethers.provider);
         await DCAPairSwapHandler.setLastSwapPerformed(staticLastSwapPerformed);
         await setNextSwapInfo({
@@ -690,19 +696,19 @@ describe('DCAPairSwapHandler', () => {
   describe('swap', () => {
     swapTestFailed({
       title: 'last swap was < than swap interval ago',
-      lastSwapPerformed: () => moment().unix() + swapInterval,
+      lastSwapPerformed: swapInterval * 10,
+      blockTimestamp: swapInterval * 11 - 1,
       nextSwapToPerform: 2,
       initialSwapperBalanceTokenA: 1,
       initialSwapperBalanceTokenB: 1,
       amountToSwapOfTokenA: 1,
       amountToSwapOfTokenB: 1,
       ratePerUnitBToA: 1,
-      reason: 'DCAPair: within swap interval',
+      reason: 'DCAPair: within interval slot',
     });
 
     swapTestFailed({
       title: 'external amount of token a to be provided is not sent',
-      lastSwapPerformed: () => moment().unix() - swapInterval,
       nextSwapToPerform: 2,
       initialSwapperBalanceTokenA: () => tokenA.asUnits(1).sub(1),
       initialSwapperBalanceTokenB: 0,
@@ -714,7 +720,6 @@ describe('DCAPairSwapHandler', () => {
 
     swapTestFailed({
       title: 'external amount of token b to be provided is not sent',
-      lastSwapPerformed: () => moment().unix() - swapInterval,
       nextSwapToPerform: 2,
       initialSwapperBalanceTokenA: 0,
       initialSwapperBalanceTokenB: () => tokenB.asUnits(1).sub(1),
@@ -726,7 +731,6 @@ describe('DCAPairSwapHandler', () => {
 
     swapTestFailed({
       title: 'pair swap handler does not own the amount of token to reward swapper with',
-      lastSwapPerformed: () => moment().unix() - swapInterval,
       nextSwapToPerform: 2,
       initialSwapperBalanceTokenA: 0,
       initialSwapperBalanceTokenB: 1,
@@ -739,8 +743,10 @@ describe('DCAPairSwapHandler', () => {
     });
 
     swapTest({
-      title: 'rate per unit is 1:1 and needing token b to be provided externally',
+      title: 'last swap was recent but on another interval slot',
       nextSwapToPerform: 2,
+      lastSwapPerformed: swapInterval * 10 - 1,
+      blockTimestamp: swapInterval * 10,
       initialContractTokenABalance: 100,
       initialContractTokenBBalance: 100,
       amountToSwapOfTokenA: 1.4,
@@ -1043,6 +1049,8 @@ describe('DCAPairSwapHandler', () => {
   function swapTest({
     title,
     nextSwapToPerform,
+    blockTimestamp,
+    lastSwapPerformed,
     initialContractTokenABalance,
     initialContractTokenBBalance,
     amountToSwapOfTokenA,
@@ -1052,6 +1060,8 @@ describe('DCAPairSwapHandler', () => {
   }: {
     title: string;
     nextSwapToPerform: BigNumber | number | string;
+    blockTimestamp?: number;
+    lastSwapPerformed?: number;
     initialContractTokenABalance: BigNumber | number | string;
     initialContractTokenBBalance: BigNumber | number | string;
     amountToSwapOfTokenA: BigNumber | number | string;
@@ -1088,6 +1098,10 @@ describe('DCAPairSwapHandler', () => {
           tokenToBeProvidedBySwapper,
           tokenToRewardSwapperWith,
         } = calculateSwapDetails(ratePerUnitBToA, amountToSwapOfTokenB, amountToSwapOfTokenA));
+        if (blockTimestamp) {
+          await DCAPairSwapHandler.setBlockTimestamp(blockTimestamp);
+        }
+        await DCAPairSwapHandler.setLastSwapPerformed(lastSwapPerformed ?? 0);
         await setNextSwapInfo({
           nextSwapToPerform,
           amountToSwapOfTokenA,
