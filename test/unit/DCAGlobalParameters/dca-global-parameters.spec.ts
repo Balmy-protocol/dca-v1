@@ -6,7 +6,7 @@ import { ethers } from 'hardhat';
 import { constants, behaviours, bn } from '../../utils';
 import { given, then, when } from '../../utils/bdd';
 
-describe.only('DCAGlobalParameters', function () {
+describe('DCAGlobalParameters', function () {
   let owner: SignerWithAddress, feeRecipient: SignerWithAddress, nftDescriptor: SignerWithAddress;
   let DCAGlobalParametersContract: ContractFactory;
   let DCAGlobalParameters: Contract;
@@ -58,7 +58,7 @@ describe.only('DCAGlobalParameters', function () {
           ],
         });
       });
-      then('contracts starts as unpaused', async () => {
+      then('contract starts as unpaused', async () => {
         expect(await DCAGlobalParameters.paused()).to.be.false;
       });
     });
