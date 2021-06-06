@@ -1,8 +1,7 @@
 import { expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chai from 'chai';
-import { Contract, ContractFactory, ContractInterface, ethers, Signer, Wallet } from 'ethers';
-import { ethers as hardhatEhters } from 'hardhat';
+import { Contract, ContractFactory, ContractInterface, Signer, Wallet } from 'ethers';
 import { TransactionResponse } from '@ethersproject/abstract-provider';
 import { getStatic, ParamType } from 'ethers/lib/utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -251,42 +250,6 @@ const shouldBeExecutableOnlyByPendingGovernor = ({
   });
 };
 
-const encodeParameters = (types: string[], values: any[]) => {
-  const abi = new ethers.utils.AbiCoder();
-  return abi.encode(types, values);
-};
-
-const shouldBeReentrancyGuarded = ({
-  contract,
-  funcAndSignature,
-  params,
-}: {
-  contract: () => Contract;
-  funcAndSignature: string;
-  params?: any[];
-}) => {
-  params = params ?? [];
-  when('trying to do a reentrancy attack', () => {
-    let attackingTx: Promise<TransactionResponse>;
-    const nonReentrantFuncAndSignature = `nonReentrant${funcAndSignature.charAt(0).toUpperCase()}${funcAndSignature.slice(1)}`;
-    given(async () => {
-      attackingTx = contract()[nonReentrantFuncAndSignature](...params!, { gasPrice: 0 });
-    });
-    then('tx is reverted with reason', async () => {
-      await expect(attackingTx).to.be.revertedWith('ReentrancyGuard: reentrant call');
-    });
-  });
-  when('not trying to do a reentrancy attack', () => {
-    let nonAttackingTx: Promise<TransactionResponse>;
-    given(async () => {
-      nonAttackingTx = contract()[funcAndSignature](...params!, { gasPrice: 0 });
-    });
-    then('tx is not reverted or not reverted with reason reentrant call', async () => {
-      await expect(nonAttackingTx).to.not.be.revertedWith('ReentrancyGuard: reentrant call');
-    });
-  });
-};
-
 const waitForTxAndNotThrow = (tx: Promise<TransactionResponse>): Promise<any> => {
   return new Promise((resolve) => {
     tx.then(resolve).catch(resolve);
@@ -305,5 +268,4 @@ export default {
   waitForTxAndNotThrow,
   shouldBeExecutableOnlyByGovernor,
   shouldBeExecutableOnlyByPendingGovernor,
-  shouldBeReentrancyGuarded,
 };
