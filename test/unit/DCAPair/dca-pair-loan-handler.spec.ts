@@ -61,7 +61,6 @@ describe('DCAPairLoanHandler', () => {
       contract: () => DCAPairLoanHandler,
       funcAndSignature: 'loan(uint256,uint256,address,bytes)',
       params: [0, 0, constants.ZERO_ADDRESS, 0],
-      paramsTypes: ['uint256', 'uint256', 'address', 'bytes'],
     });
 
     flashLoanFailedTest({

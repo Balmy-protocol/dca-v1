@@ -10,4 +10,14 @@ contract DCAPairLoanHandlerMock is DCAPairLoanHandler, DCAPairParametersMock {
     IERC20Detailed _token1,
     IDCAGlobalParameters _globalParameters
   ) DCAPairParametersMock(_globalParameters, _token0, _token1) {}
+
+  // Non Reentrant
+  function nonReentrantLoan(
+    uint256 _amountToBorrowTokenA,
+    uint256 _amountToBorrowTokenB,
+    address _to,
+    bytes memory _data
+  ) external nonReentrant {
+    loan(_amountToBorrowTokenA, _amountToBorrowTokenB, _to, _data);
+  }
 }
