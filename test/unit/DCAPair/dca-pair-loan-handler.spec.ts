@@ -57,6 +57,13 @@ describe('DCAPairLoanHandler', () => {
       await DCAPairLoanHandler.setInternalBalances(PAIR_TOKEN_A_INITIAL_BALANCE, PAIR_TOKEN_B_INITIAL_BALANCE);
     });
 
+    behaviours.shouldBeReentrancyGuarded({
+      contract: () => DCAPairLoanHandler,
+      funcAndSignature: 'loan(uint256,uint256,address,bytes)',
+      params: [0, 0, constants.ZERO_ADDRESS, 0],
+      paramsTypes: ['uint256', 'uint256', 'address', 'bytes'],
+    });
+
     flashLoanFailedTest({
       title: 'no amount is borrowed',
       amountToBorrowTokenA: () => constants.ZERO,
