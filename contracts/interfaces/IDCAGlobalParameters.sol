@@ -4,6 +4,18 @@ pragma solidity 0.8.4;
 import './IDCATokenDescriptor.sol';
 
 interface IDCAGlobalParameters {
+  struct SwapParameters {
+    address feeRecipient;
+    bool isPaused;
+    uint32 swapFee;
+  }
+
+  struct LoanParameters {
+    address feeRecipient;
+    bool isPaused;
+    uint32 loanFee;
+  }
+
   event FeeRecipientSet(address _feeRecipient);
   event NFTDescriptorSet(IDCATokenDescriptor _descriptor);
   event SwapFeeSet(uint32 _feeSet);
@@ -32,6 +44,12 @@ interface IDCAGlobalParameters {
 
   function isSwapIntervalAllowed(uint32 _swapInterval) external view returns (bool);
 
+  function paused() external view returns (bool);
+
+  function swapParameters() external view returns (SwapParameters memory);
+
+  function loanParameters() external view returns (LoanParameters memory);
+
   /* Public setters */
   function setFeeRecipient(address _feeRecipient) external;
 
@@ -44,4 +62,8 @@ interface IDCAGlobalParameters {
   function addSwapIntervalsToAllowedList(uint32[] calldata _swapIntervals, string[] calldata _descriptions) external;
 
   function removeSwapIntervalsFromAllowedList(uint32[] calldata _swapIntervals) external;
+
+  function pause() external;
+
+  function unpause() external;
 }
