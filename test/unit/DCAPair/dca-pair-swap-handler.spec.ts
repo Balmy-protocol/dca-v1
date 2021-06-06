@@ -12,7 +12,7 @@ import { TokenContract } from '../../utils/erc20';
 const MINIMUM_SWAP_INTERVAL = BigNumber.from('60');
 const APPLY_FEE = (bn: BigNumber) => bn.mul(3).div(1000);
 
-describe.only('DCAPairSwapHandler', () => {
+describe('DCAPairSwapHandler', () => {
   let owner: SignerWithAddress;
   let feeRecipient: SignerWithAddress;
   let tokenA: TokenContract, tokenB: TokenContract;
@@ -889,7 +889,6 @@ describe.only('DCAPairSwapHandler', () => {
       contract: () => DCAPairSwapHandler,
       funcAndSignature: 'swap(uint256,uint256,address,bytes)',
       params: [0, 0, constants.ZERO_ADDRESS, 0],
-      paramsTypes: ['uint256', 'uint256', 'address', 'bytes'],
     });
 
     when('swapper intends to borrow more than available in a', () => {

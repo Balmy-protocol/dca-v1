@@ -260,28 +260,20 @@ const shouldBeReentrancyGuarded = ({
   contract,
   funcAndSignature,
   params,
-  paramsTypes,
 }: {
   contract: () => Contract;
   funcAndSignature: string;
   params?: any[];
-  paramsTypes?: string[];
 }) => {
   params = params ?? [];
-  paramsTypes = paramsTypes ?? [];
-  let proxyContract: Contract;
-  given(async () => {
-    const proxyFactory = await hardhatEhters.getContractFactory('contracts/mocks/Proxy.sol:Proxy');
-    proxyContract = await proxyFactory.deploy();
-  });
   when('trying to do a reentrancy attack', () => {
     let attackingTx: Promise<TransactionResponse>;
+    const nonReentrantFuncAndSignature = `nonReentrant${funcAndSignature.charAt(0).toUpperCase()}${funcAndSignature.slice(1)}`;
     given(async () => {
-      const encodedParameters = encodeParameters(paramsTypes!, params!);
-      attackingTx = proxyContract.executeDoubleTransaction(contract().address, funcAndSignature, encodedParameters, { gasPrice: 0 });
+      attackingTx = contract()[nonReentrantFuncAndSignature](...params!, { gasPrice: 0 });
     });
     then('tx is reverted with reason', async () => {
-      await expect(attackingTx).to.be.revertedWith('reentrant attack stopped');
+      await expect(attackingTx).to.be.revertedWith('ReentrancyGuard: reentrant call');
     });
   });
   when('not trying to do a reentrancy attack', () => {
@@ -289,8 +281,8 @@ const shouldBeReentrancyGuarded = ({
     given(async () => {
       nonAttackingTx = contract()[funcAndSignature](...params!, { gasPrice: 0 });
     });
-    then('tx is not reverted or not reverted with reason reentrant attack stopped', async () => {
-      await expect(nonAttackingTx).to.not.be.revertedWith('reentrant attack stopped');
+    then('tx is not reverted or not reverted with reason reentrant call', async () => {
+      await expect(nonAttackingTx).to.not.be.revertedWith('ReentrancyGuard: reentrant call');
     });
   });
 };

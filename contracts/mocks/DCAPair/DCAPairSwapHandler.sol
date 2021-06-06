@@ -18,6 +18,20 @@ contract DCAPairSwapHandlerMock is DCAPairSwapHandler, DCAPairParametersMock {
     /* */
   }
 
+  // Non Reentrant
+  function nonReentrantSwap() external nonReentrant {
+    swap();
+  }
+
+  function nonReentrantSwap(
+    uint256 _amountToBorrowTokenA,
+    uint256 _amountToBorrowTokenB,
+    address _to,
+    bytes memory _data
+  ) external nonReentrant {
+    swap(_amountToBorrowTokenA, _amountToBorrowTokenB, _to, _data);
+  }
+
   // SwapHandler
 
   function registerSwap(
