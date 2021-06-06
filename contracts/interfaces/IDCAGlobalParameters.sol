@@ -32,6 +32,8 @@ interface IDCAGlobalParameters {
 
   function isSwapIntervalAllowed(uint32 _swapInterval) external view returns (bool);
 
+  function paused() external returns (bool);
+
   /* Public setters */
   function setFeeRecipient(address _feeRecipient) external;
 

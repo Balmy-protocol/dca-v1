@@ -84,6 +84,10 @@ contract DCAGlobalParameters is IDCAGlobalParameters, Governable, Pausable {
     return _allowedSwapIntervals.contains(_swapInterval);
   }
 
+  function paused() public view override(IDCAGlobalParameters, Pausable) returns (bool) {
+    return super.paused();
+  }
+
   function pause() public override onlyGovernor {
     _pause();
   }

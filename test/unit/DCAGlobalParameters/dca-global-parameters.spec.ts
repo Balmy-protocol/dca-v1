@@ -6,7 +6,7 @@ import { ethers } from 'hardhat';
 import { constants, behaviours, bn } from '../../utils';
 import { given, then, when } from '../../utils/bdd';
 
-describe('DCAGlobalParameters', function () {
+describe('DCAGlobalParameters', () => {
   let owner: SignerWithAddress, feeRecipient: SignerWithAddress, nftDescriptor: SignerWithAddress;
   let DCAGlobalParametersContract: ContractFactory;
   let DCAGlobalParameters: Contract;
