@@ -44,4 +44,8 @@ interface IDCAGlobalParameters {
   function addSwapIntervalsToAllowedList(uint32[] calldata _swapIntervals, string[] calldata _descriptions) external;
 
   function removeSwapIntervalsFromAllowedList(uint32[] calldata _swapIntervals) external;
+
+  function pause() external;
+
+  function unpause() external;
 }
