@@ -42,7 +42,7 @@ contract Proxy {
       callData = abi.encodePacked(bytes4(keccak256(bytes(signature))), data);
     }
 
-    // solium-disable-next-line security/no-call-value avoid-low-level-calls
+    // solhint-disable-next-line avoid-low-level-calls
     (bool success, ) = target.call{value: 0}(callData);
 
     return success;
