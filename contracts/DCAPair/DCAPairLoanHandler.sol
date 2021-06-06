@@ -14,6 +14,11 @@ abstract contract DCAPairLoanHandler is DCAPairParameters, IDCAPairLoanHandler {
     bytes memory _data
   ) public override {
     require(_amountToBorrowTokenA > 0 || _amountToBorrowTokenB > 0, 'DCAPair: need to borrow smth');
+    require(!globalParameters.paused(), 'DCAPair: flash loans are paused');
+
+    IDCAGlobalParameters.LoanParameters memory _loanParameters = globalParameters.loanParameters();
+
+    require(!_loanParameters.isPaused, 'DCAPair: flash loans are paused');
 
     uint256 _beforeBalanceTokenA = _balances[address(tokenA)];
     uint256 _beforeBalanceTokenB = _balances[address(tokenB)];
@@ -21,9 +26,8 @@ abstract contract DCAPairLoanHandler is DCAPairParameters, IDCAPairLoanHandler {
     require(_amountToBorrowTokenA <= _beforeBalanceTokenA && _amountToBorrowTokenB <= _beforeBalanceTokenB, 'DCAPair: insufficient liquidity');
 
     // Calculate fees
-    uint32 _loanFee = globalParameters.loanFee();
-    uint256 _feeTokenA = _amountToBorrowTokenA > 0 ? _getFeeFromAmount(_loanFee, _amountToBorrowTokenA) : 0;
-    uint256 _feeTokenB = _amountToBorrowTokenB > 0 ? _getFeeFromAmount(_loanFee, _amountToBorrowTokenB) : 0;
+    uint256 _feeTokenA = _amountToBorrowTokenA > 0 ? _getFeeFromAmount(_loanParameters.loanFee, _amountToBorrowTokenA) : 0;
+    uint256 _feeTokenB = _amountToBorrowTokenB > 0 ? _getFeeFromAmount(_loanParameters.loanFee, _amountToBorrowTokenB) : 0;
 
     if (_amountToBorrowTokenA > 0) tokenA.safeTransfer(_to, _amountToBorrowTokenA);
     if (_amountToBorrowTokenB > 0) tokenB.safeTransfer(_to, _amountToBorrowTokenB);
@@ -54,11 +58,10 @@ abstract contract DCAPairLoanHandler is DCAPairParameters, IDCAPairLoanHandler {
     _balances[address(tokenB)] = _afterBalanceTokenB - _feeTokenB;
 
     // Send fees
-    address _feeRecipient = globalParameters.feeRecipient();
-    tokenA.safeTransfer(_feeRecipient, _feeTokenA);
-    tokenB.safeTransfer(_feeRecipient, _feeTokenB);
+    tokenA.safeTransfer(_loanParameters.feeRecipient, _feeTokenA);
+    tokenB.safeTransfer(_loanParameters.feeRecipient, _feeTokenB);
 
     // Emit event
-    emit Loaned(msg.sender, _to, _amountToBorrowTokenA, _amountToBorrowTokenB, _loanFee);
+    emit Loaned(msg.sender, _to, _amountToBorrowTokenA, _amountToBorrowTokenB, _loanParameters.loanFee);
   }
 }
