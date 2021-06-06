@@ -1,10 +1,9 @@
 import { expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chai from 'chai';
-import { Contract, ContractFactory, ContractInterface, ethers, Signer, Wallet } from 'ethers';
-import { ethers as hardhatEhters } from 'hardhat';
+import { Contract, ContractFactory, ContractInterface, Signer, Wallet } from 'ethers';
 import { TransactionResponse } from '@ethersproject/abstract-provider';
-import { getStatic, ParamType } from 'ethers/lib/utils';
+import { getStatic } from 'ethers/lib/utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { given, then, when } from './bdd';
 import { wallet } from '.';
