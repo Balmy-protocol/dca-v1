@@ -70,6 +70,16 @@ contract DCAPairLoanCalleeMock is IDCAPairLoanCallee {
 }
 
 contract ReentrantDCAPairLoanCalleeMock is IDCAPairLoanCallee {
+  string internal _attack;
+
+  constructor(string memory __attack) {
+    _attack = __attack;
+  }
+
+  function setAttack(string memory __attack) external {
+    _attack = __attack;
+  }
+
   // solhint-disable-next-line func-name-mixedcase
   function DCAPairLoanCall(
     address,
@@ -81,6 +91,12 @@ contract ReentrantDCAPairLoanCalleeMock is IDCAPairLoanCallee {
     uint256,
     bytes calldata
   ) public override {
-    IDCAPairLoanHandler(msg.sender).loan(0, 0, msg.sender, '');
+    if (keccak256(bytes(_attack)) == keccak256(bytes('deposit'))) {
+      IDCAPairPositionHandler(msg.sender).deposit(msg.sender, 0, 0);
+    } else if (keccak256(bytes(_attack)) == keccak256(bytes('withdrawSwapped'))) {
+      IDCAPairPositionHandler(msg.sender).withdrawSwapped(0);
+    } else if (keccak256(bytes(_attack)) == keccak256(bytes('loan'))) {
+      IDCAPairLoanHandler(msg.sender).loan(0, 0, msg.sender, '');
+    }
   }
 }
