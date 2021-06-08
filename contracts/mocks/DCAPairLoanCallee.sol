@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.4;
 
-import '../interfaces/IDCAPair.sol';
+import '@openzeppelin/contracts/utils/Address.sol';
+
 import '../interfaces/IDCAPairLoanCallee.sol';
+import '../interfaces/IDCAPair.sol';
 
 contract DCAPairLoanCalleeMock is IDCAPairLoanCallee {
   struct LoanCall {
@@ -70,13 +72,11 @@ contract DCAPairLoanCalleeMock is IDCAPairLoanCallee {
 }
 
 contract ReentrantDCAPairLoanCalleeMock is IDCAPairLoanCallee {
-  string internal _attack;
+  using Address for address;
 
-  constructor(string memory __attack) {
-    _attack = __attack;
-  }
+  bytes internal _attack;
 
-  function setAttack(string memory __attack) external {
+  function setAttack(bytes memory __attack) external {
     _attack = __attack;
   }
 
@@ -91,12 +91,6 @@ contract ReentrantDCAPairLoanCalleeMock is IDCAPairLoanCallee {
     uint256,
     bytes calldata
   ) public override {
-    if (keccak256(bytes(_attack)) == keccak256(bytes('deposit'))) {
-      IDCAPairPositionHandler(msg.sender).deposit(msg.sender, 0, 0);
-    } else if (keccak256(bytes(_attack)) == keccak256(bytes('withdrawSwapped'))) {
-      IDCAPairPositionHandler(msg.sender).withdrawSwapped(0);
-    } else if (keccak256(bytes(_attack)) == keccak256(bytes('loan'))) {
-      IDCAPairLoanHandler(msg.sender).loan(0, 0, msg.sender, '');
-    }
+    (msg.sender).functionCall(_attack);
   }
 }
