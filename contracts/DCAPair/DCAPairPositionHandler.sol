@@ -113,13 +113,13 @@ abstract contract DCAPairPositionHandler is ReentrancyGuard, DCAPairParameters, 
     uint32 _swapsLeft = _userPositions[_dcaId].lastSwap - performedSwaps;
     require(_swapsLeft > 0, 'DCAPair: position completed');
 
-    modifyRateAndSwaps(_dcaId, _newRate, _swapsLeft);
+    _modifyRateAndSwaps(_dcaId, _newRate, _swapsLeft);
   }
 
   function modifySwaps(uint256 _dcaId, uint32 _newSwaps) public override nonReentrant {
     _assertPositionExistsAndCanBeOperatedByCaller(_dcaId);
 
-    modifyRateAndSwaps(_dcaId, _userPositions[_dcaId].rate, _newSwaps);
+    _modifyRateAndSwaps(_dcaId, _userPositions[_dcaId].rate, _newSwaps);
   }
 
   function modifyRateAndSwaps(
@@ -129,10 +129,7 @@ abstract contract DCAPairPositionHandler is ReentrancyGuard, DCAPairParameters, 
   ) public override nonReentrant {
     _assertPositionExistsAndCanBeOperatedByCaller(_dcaId);
 
-    uint256 _unswapped = _calculateUnswapped(_dcaId);
-    uint256 _totalNecessary = _newRate * _newAmountOfSwaps;
-
-    _modifyPosition(_dcaId, _totalNecessary, _unswapped, _newRate, _newAmountOfSwaps);
+    _modifyRateAndSwaps(_dcaId, _newRate, _newAmountOfSwaps);
   }
 
   function addFundsToPosition(
@@ -150,6 +147,17 @@ abstract contract DCAPairPositionHandler is ReentrancyGuard, DCAPairParameters, 
   }
 
   /** Helper function to modify a position */
+  function _modifyRateAndSwaps(
+    uint256 _dcaId,
+    uint192 _newRate,
+    uint32 _newAmountOfSwaps
+  ) internal {
+    uint256 _unswapped = _calculateUnswapped(_dcaId);
+    uint256 _totalNecessary = _newRate * _newAmountOfSwaps;
+
+    _modifyPosition(_dcaId, _totalNecessary, _unswapped, _newRate, _newAmountOfSwaps);
+  }
+
   function _modifyPosition(
     uint256 _dcaId,
     uint256 _totalNecessary,

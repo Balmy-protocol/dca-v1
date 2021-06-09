@@ -21,6 +21,8 @@ contract('DCAPair', () => {
     let DCAGlobalParameters: Contract;
     let reentrantDCAPairLoanCalleeFactory: ContractFactory;
     let reentrantDCAPairSwapCalleeFactory: ContractFactory;
+    let staticSlidingOracleContract: ContractFactory;
+    let staticSlidingOracle: Contract;
     const swapInterval = moment.duration(10, 'minutes').as('seconds');
 
     before('Setup accounts and contracts', async () => {
@@ -35,6 +37,7 @@ contract('DCAPair', () => {
       reentrantDCAPairSwapCalleeFactory = await ethers.getContractFactory(
         'contracts/mocks/DCAPairSwapCallee.sol:ReentrantDCAPairSwapCalleeMock'
       );
+      staticSlidingOracleContract = await ethers.getContractFactory('contracts/mocks/StaticSlidingOracle.sol:StaticSlidingOracle');
     });
 
     beforeEach('Deploy and configure', async () => {
@@ -47,8 +50,15 @@ contract('DCAPair', () => {
         name: 'tokenB',
         symbol: 'TKNB',
       });
+      staticSlidingOracle = await staticSlidingOracleContract.deploy(0, 0);
       DCAGlobalParameters = await DCAGlobalParametersFactory.deploy(governor.address, feeRecipient.address, constants.NOT_ZERO_ADDRESS);
-      DCAPair = await DCAPairFactory.deploy(DCAGlobalParameters.address, tokenA.address, tokenB.address, swapInterval);
+      DCAPair = await DCAPairFactory.deploy(
+        DCAGlobalParameters.address,
+        staticSlidingOracle.address,
+        tokenA.address,
+        tokenB.address,
+        swapInterval
+      );
     });
 
     describe('loan', () => {
@@ -74,13 +84,13 @@ contract('DCAPair', () => {
       });
     });
 
-    // TODO: NEEDS TO HAVE ORACLE IN ORDER TO WORK
-    describe.skip('flash swap', () => {
+    describe('flash swap', () => {
       const rateTokenA = 50;
       const swapsTokenA = 13;
       let totalTokenA: BigNumber;
       let reentrantDCAPairSwapCallee: Contract;
       given(async () => {
+        await staticSlidingOracle.setRate(tokenA.asUnits('1'), 18);
         totalTokenA = tokenA.asUnits(rateTokenA).mul(swapsTokenA);
         await deposit({
           token: () => tokenA,
@@ -93,7 +103,7 @@ contract('DCAPair', () => {
 
       testReentrantForFunction({
         funcAndSignature: 'swap(uint256,uint256,address,bytes)',
-        args: () => [totalTokenA.sub(1), 0, reentrantDCAPairSwapCallee.address, '0x'],
+        args: () => [0, 0, reentrantDCAPairSwapCallee.address, utils.formatBytes32String('')],
         attackerContract: () => reentrantDCAPairSwapCallee,
       });
     });
