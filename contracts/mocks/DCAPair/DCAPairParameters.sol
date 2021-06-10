@@ -8,8 +8,9 @@ contract DCAPairParametersMock is DCAPairParameters {
   constructor(
     IDCAGlobalParameters _globalParameters,
     IERC20Detailed _tokenA,
-    IERC20Detailed _tokenB
-  ) DCAPairParameters(_globalParameters, _tokenA, _tokenB) {}
+    IERC20Detailed _tokenB,
+    uint32 _swapInterval
+  ) DCAPairParameters(_globalParameters, _tokenA, _tokenB, _swapInterval) {}
 
   // Mocks setters
 

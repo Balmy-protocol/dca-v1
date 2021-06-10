@@ -16,6 +16,8 @@ interface IDCAPairParameters {
   function swapAmountDelta(address, uint32) external view returns (int256);
 
   function performedSwaps() external view returns (uint32);
+
+  function swapInterval() external view returns (uint32);
 }
 
 interface IDCAPairPositionHandler {
@@ -88,8 +90,6 @@ interface IDCAPairSwapHandler {
     uint256 _amountBorrowedTokenB,
     NextSwapInformation _nextSwapInformation
   );
-
-  function swapInterval() external view returns (uint32);
 
   function lastSwapPerformed() external view returns (uint256);
 

@@ -61,15 +61,6 @@ describe('DCAPairSwapHandler', () => {
   });
 
   describe('constructor', () => {
-    when('swap interval is less than MINIMUM_SWAP_INTERVAL', () => {
-      then('reverts with message', async () => {
-        await behaviours.deployShouldRevertWithMessage({
-          contract: DCAPairSwapHandlerContract,
-          args: [tokenA.address, tokenB.address, DCAGlobalParameters.address, staticSlidingOracle.address, MINIMUM_SWAP_INTERVAL.sub(1)],
-          message: 'DCAPair: interval too short',
-        });
-      });
-    });
     when('global parameters is zero', () => {
       then('reverts with message', async () => {
         await behaviours.deployShouldRevertWithZeroAddress({

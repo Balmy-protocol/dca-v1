@@ -14,5 +14,5 @@ contract DCAPair is DCAPairParameters, DCAPairSwapHandler, DCAPairPositionHandle
     IERC20Detailed _tokenA,
     IERC20Detailed _tokenB,
     uint32 _swapInterval
-  ) DCAPairParameters(_globalParameters, _tokenA, _tokenB) DCAPairSwapHandler(_oracle, _swapInterval) DCAPairPositionHandler(_tokenA, _tokenB) {}
+  ) DCAPairParameters(_globalParameters, _tokenA, _tokenB, _swapInterval) DCAPairSwapHandler(_oracle) DCAPairPositionHandler(_tokenA, _tokenB) {}
 }

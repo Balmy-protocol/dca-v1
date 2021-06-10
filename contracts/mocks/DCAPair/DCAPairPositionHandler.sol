@@ -10,7 +10,7 @@ contract DCAPairPositionHandlerMock is DCAPairPositionHandler, DCAPairParameters
     IDCAGlobalParameters _globalParameters,
     IERC20Detailed _tokenA,
     IERC20Detailed _tokenB
-  ) DCAPairParametersMock(_globalParameters, _tokenA, _tokenB) DCAPairPositionHandler(_tokenA, _tokenB) {
+  ) DCAPairParametersMock(_globalParameters, _tokenA, _tokenB, 0) DCAPairPositionHandler(_tokenA, _tokenB) {
     /* */
   }
 

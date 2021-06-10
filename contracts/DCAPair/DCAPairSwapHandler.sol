@@ -14,15 +14,13 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
   uint32 internal constant _MINIMUM_SWAP_INTERVAL = 1 minutes;
 
   mapping(address => uint256) public override swapAmountAccumulator;
-  uint32 public override swapInterval;
+
   uint256 public override lastSwapPerformed;
   ISlidingOracle public override oracle;
 
-  constructor(ISlidingOracle _oracle, uint32 _swapInterval) {
+  constructor(ISlidingOracle _oracle) {
     require(address(_oracle) != address(0), 'DCAPair: zero address');
-    require(_swapInterval >= _MINIMUM_SWAP_INTERVAL, 'DCAPair: interval too short');
     oracle = _oracle;
-    swapInterval = _swapInterval;
   }
 
   function _addNewRatePerUnit(

@@ -14,7 +14,7 @@ contract DCAPairSwapHandlerMock is DCAPairSwapHandler, DCAPairParametersMock {
     IDCAGlobalParameters _globalParameters,
     ISlidingOracle _oracle,
     uint32 _swapInterval
-  ) DCAPairParametersMock(_globalParameters, _token0, _token1) DCAPairSwapHandler(_oracle, _swapInterval) {
+  ) DCAPairParametersMock(_globalParameters, _token0, _token1, _swapInterval) DCAPairSwapHandler(_oracle) {
     /* */
   }
 
