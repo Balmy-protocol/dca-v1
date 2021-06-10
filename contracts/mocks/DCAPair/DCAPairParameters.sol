@@ -36,7 +36,7 @@ contract DCAPairParametersMock is DCAPairParameters {
     uint32 _swap,
     int256 _delta
   ) public {
-    swapAmountDelta[_tokenAddress][_swap] = _delta;
+    swapAmountDelta[swapInterval][_tokenAddress][_swap] = _delta;
   }
 
   function setAcummRatesPerUnit(
@@ -44,15 +44,19 @@ contract DCAPairParametersMock is DCAPairParameters {
     uint32 _swap,
     uint256[2] memory _accumRatePerUnit
   ) public {
-    _accumRatesPerUnit[_tokenAddress][_swap] = _accumRatePerUnit;
+    _accumRatesPerUnit[swapInterval][_tokenAddress][_swap] = _accumRatePerUnit;
   }
 
-  function accumRatesPerUnit(address _tokenAddress, uint32 _swap) public view returns (uint256[2] memory) {
-    return _accumRatesPerUnit[_tokenAddress][_swap];
+  function accumRatesPerUnit(
+    uint32 _swapInterval,
+    address _tokenAddress,
+    uint32 _swap
+  ) public view returns (uint256[2] memory) {
+    return _accumRatesPerUnit[_swapInterval][_tokenAddress][_swap];
   }
 
   function setPerformedSwaps(uint32 _performedSwaps) public {
-    performedSwaps = _performedSwaps;
+    performedSwaps[swapInterval] = _performedSwaps;
   }
 
   function setRatePerUnit(
@@ -61,7 +65,7 @@ contract DCAPairParametersMock is DCAPairParameters {
     uint256 _rate,
     uint256 _rateMultiplier
   ) public {
-    _accumRatesPerUnit[_tokenAddress][_swap] = [_rate, _rateMultiplier];
+    _accumRatesPerUnit[swapInterval][_tokenAddress][_swap] = [_rate, _rateMultiplier];
   }
 
   function getFeeFromAmount(uint32 _feeAmount, uint256 _amount) public view returns (uint256) {

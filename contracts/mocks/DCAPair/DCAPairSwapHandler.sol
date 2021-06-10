@@ -52,10 +52,10 @@ contract DCAPairSwapHandlerMock is DCAPairSwapHandler, DCAPairParametersMock {
   }
 
   function setSwapAmountAccumulator(address _tokenAddress, uint256 _swapAmountAccumulator) public {
-    swapAmountAccumulator[_tokenAddress] = _swapAmountAccumulator;
+    swapAmountAccumulator[swapInterval][_tokenAddress] = _swapAmountAccumulator;
   }
 
   function setLastSwapPerformed(uint256 _lastSwapPerformend) public {
-    lastSwapPerformed = _lastSwapPerformend;
+    lastSwapPerformed[swapInterval] = _lastSwapPerformend;
   }
 }

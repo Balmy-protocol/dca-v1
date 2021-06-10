@@ -8,11 +8,13 @@ import { when, then, given } from '../../utils/bdd';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 import { TokenContract } from '../../utils/erc20';
 
+// TODO: Test swap interval properly
 describe('DCAPositionHandler', () => {
   const PERFORMED_SWAPS_10 = 10;
   const POSITION_RATE_5 = 5;
   const POSITION_SWAPS_TO_PERFORM_10 = 10;
   const RATE_PER_UNIT_5 = 5;
+  const SWAP_INTERVAL = 0;
 
   const INITIAL_TOKEN_A_BALANCE_CONTRACT = 100;
   const INITIAL_TOKEN_A_BALANCE_USER = 100;
@@ -82,7 +84,7 @@ describe('DCAPositionHandler', () => {
       behaviours.txShouldRevertWithMessage({
         contract: DCAPositionHandler,
         func: 'deposit',
-        args: [address, rate, swaps],
+        args: [address, rate, swaps, SWAP_INTERVAL],
         message: error,
       });
 
@@ -161,9 +163,13 @@ describe('DCAPositionHandler', () => {
       });
 
       then('trade is recorded', async () => {
-        const deltaPerformedSwaps = await DCAPositionHandler.swapAmountDelta(tokenA.address, PERFORMED_SWAPS_10);
-        const deltaFirstDay = await DCAPositionHandler.swapAmountDelta(tokenA.address, PERFORMED_SWAPS_10 + 1);
-        const deltaLastDay = await DCAPositionHandler.swapAmountDelta(tokenA.address, PERFORMED_SWAPS_10 + POSITION_SWAPS_TO_PERFORM_10);
+        const deltaPerformedSwaps = await DCAPositionHandler.swapAmountDelta(SWAP_INTERVAL, tokenA.address, PERFORMED_SWAPS_10);
+        const deltaFirstDay = await DCAPositionHandler.swapAmountDelta(SWAP_INTERVAL, tokenA.address, PERFORMED_SWAPS_10 + 1);
+        const deltaLastDay = await DCAPositionHandler.swapAmountDelta(
+          SWAP_INTERVAL,
+          tokenA.address,
+          PERFORMED_SWAPS_10 + POSITION_SWAPS_TO_PERFORM_10
+        );
 
         expect(deltaPerformedSwaps).to.equal(0);
         expect(deltaFirstDay).to.equal(tokenA.asUnits(POSITION_RATE_5));
@@ -1212,7 +1218,7 @@ describe('DCAPositionHandler', () => {
   }
 
   async function deposit(token: TokenContract, rate: number, swaps: number) {
-    const response: TransactionResponse = await DCAPositionHandler.deposit(token.address, token.asUnits(rate), swaps);
+    const response: TransactionResponse = await DCAPositionHandler.deposit(token.address, token.asUnits(rate), swaps, SWAP_INTERVAL);
     const dcaId = await readArgFromEventOrFail<BigNumber>(response, 'Deposited', '_dcaId');
     return { response, dcaId };
   }

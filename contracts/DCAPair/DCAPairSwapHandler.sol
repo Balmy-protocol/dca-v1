@@ -13,9 +13,9 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
 
   uint32 internal constant _MINIMUM_SWAP_INTERVAL = 1 minutes;
 
-  mapping(address => uint256) public override swapAmountAccumulator;
+  mapping(uint32 => mapping(address => uint256)) public override swapAmountAccumulator; // swap interval => from token => swap amount accum
 
-  uint256 public override lastSwapPerformed;
+  mapping(uint32 => uint256) public override lastSwapPerformed;
   ISlidingOracle public override oracle;
 
   constructor(ISlidingOracle _oracle) {
@@ -29,13 +29,13 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
     uint256 _ratePerUnit
   ) internal {
     uint32 _previousSwap = _performedSwap - 1;
-    uint256[2] memory _accumRatesPerUnitPreviousSwap = _accumRatesPerUnit[_address][_previousSwap];
+    uint256[2] memory _accumRatesPerUnitPreviousSwap = _accumRatesPerUnit[swapInterval][_address][_previousSwap];
     (bool _ok, uint256 _result) = Math.tryAdd(_accumRatesPerUnitPreviousSwap[0], _ratePerUnit);
     if (_ok) {
-      _accumRatesPerUnit[_address][_performedSwap] = [_result, _accumRatesPerUnitPreviousSwap[1]];
+      _accumRatesPerUnit[swapInterval][_address][_performedSwap] = [_result, _accumRatesPerUnitPreviousSwap[1]];
     } else {
       uint256 _missingUntilOverflow = type(uint256).max - _accumRatesPerUnitPreviousSwap[0];
-      _accumRatesPerUnit[_address][_performedSwap] = [_ratePerUnit - _missingUntilOverflow, _accumRatesPerUnitPreviousSwap[1] + 1];
+      _accumRatesPerUnit[swapInterval][_address][_performedSwap] = [_ratePerUnit - _missingUntilOverflow, _accumRatesPerUnitPreviousSwap[1] + 1];
     }
   }
 
@@ -45,13 +45,15 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
     uint256 _ratePerUnit,
     uint32 _swapToRegister
   ) internal {
-    swapAmountAccumulator[_token] = _internalAmountUsedToSwap;
+    swapAmountAccumulator[swapInterval][_token] = _internalAmountUsedToSwap;
     _addNewRatePerUnit(_token, _swapToRegister, _ratePerUnit);
-    delete swapAmountDelta[_token][_swapToRegister];
+    delete swapAmountDelta[swapInterval][_token][_swapToRegister];
   }
 
   function _getAmountToSwap(address _address, uint32 _swapToPerform) internal view returns (uint256 _swapAmountAccumulator) {
-    unchecked {_swapAmountAccumulator = swapAmountAccumulator[_address] + uint256(swapAmountDelta[_address][_swapToPerform]);}
+    unchecked {
+      _swapAmountAccumulator = swapAmountAccumulator[swapInterval][_address] + uint256(swapAmountDelta[swapInterval][_address][_swapToPerform]);
+    }
   }
 
   function _convertTo(
@@ -68,7 +70,7 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
   }
 
   function _getNextSwapInfo(uint32 _swapFee) internal view returns (NextSwapInformation memory _nextSwapInformation) {
-    _nextSwapInformation.swapToPerform = performedSwaps + 1;
+    _nextSwapInformation.swapToPerform = performedSwaps[swapInterval] + 1;
     _nextSwapInformation.amountToSwapTokenA = _getAmountToSwap(address(tokenA), _nextSwapInformation.swapToPerform);
     _nextSwapInformation.amountToSwapTokenB = _getAmountToSwap(address(tokenB), _nextSwapInformation.swapToPerform);
     // TODO: Instead of using current, it should use quote to get a moving average and not current?
@@ -124,7 +126,7 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
   ) public override nonReentrant {
     IDCAGlobalParameters.SwapParameters memory _swapParameters = globalParameters.swapParameters();
     require(!_swapParameters.isPaused, 'DCAPair: swaps are paused');
-    require(lastSwapPerformed / swapInterval < _getTimestamp() / swapInterval, 'DCAPair: within interval slot');
+    require(lastSwapPerformed[swapInterval] / swapInterval < _getTimestamp() / swapInterval, 'DCAPair: within interval slot');
     NextSwapInformation memory _nextSwapInformation = _getNextSwapInfo(_swapParameters.swapFee);
     _registerSwap(
       address(tokenA),
@@ -138,8 +140,8 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
       _nextSwapInformation.ratePerUnitBToA,
       _nextSwapInformation.swapToPerform
     );
-    performedSwaps = _nextSwapInformation.swapToPerform;
-    lastSwapPerformed = block.timestamp;
+    performedSwaps[swapInterval] = _nextSwapInformation.swapToPerform;
+    lastSwapPerformed[swapInterval] = block.timestamp;
     require(
       _amountToBorrowTokenA <= _nextSwapInformation.availableToBorrowTokenA &&
         _amountToBorrowTokenB <= _nextSwapInformation.availableToBorrowTokenB,

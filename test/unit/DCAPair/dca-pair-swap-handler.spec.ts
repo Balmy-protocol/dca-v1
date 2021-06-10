@@ -129,7 +129,7 @@ describe('DCAPairSwapHandler', () => {
         await DCAPairSwapHandler.addNewRatePerUnit(token(), performedSwapBN, ratePerUnit);
       });
       then('increments the rates per unit accumulator base and overflow if needed', async () => {
-        const accumRatesPerUnit = await DCAPairSwapHandler.accumRatesPerUnit(token(), performedSwapBN);
+        const accumRatesPerUnit = await DCAPairSwapHandler.accumRatesPerUnit(swapInterval, token(), performedSwapBN);
         if (previousAccumRatesPerUnitBN.add(ratePerUnitBN).gt(ethers.constants.MaxUint256)) {
           expect(accumRatesPerUnit[0]).to.equal(ratePerUnitBN.sub(ethers.constants.MaxUint256.sub(previousAccumRatesPerUnitBN)));
           expect(accumRatesPerUnit[1]).to.equal(previousAccumRatesPerUnitMultiplierBN.add(1));
@@ -234,13 +234,13 @@ describe('DCAPairSwapHandler', () => {
         await DCAPairSwapHandler.registerSwap(token(), internalAmountUsedToSwapBN, ratePerUnitBN, performedSwapBN);
       });
       then('sets swap amount accumulator to last internal swap', async () => {
-        expect(await DCAPairSwapHandler.swapAmountAccumulator(token())).to.equal(internalAmountUsedToSwapBN);
+        expect(await DCAPairSwapHandler.swapAmountAccumulator(swapInterval, token())).to.equal(internalAmountUsedToSwapBN);
       });
       then('adds new rate per unit', async () => {
         // expect('_addNewRatePerUnit').to.be.calledOnContractWith(DCAPairSwapHandler, [token(), performedSwapBN, ratePerUnitBN]);
       });
       then('deletes swap amount delta of swap to register', async () => {
-        expect(await DCAPairSwapHandler.swapAmountDelta(token(), performedSwapBN)).to.equal(0);
+        expect(await DCAPairSwapHandler.swapAmountDelta(swapInterval, token(), performedSwapBN)).to.equal(0);
       });
     });
   }
@@ -294,7 +294,7 @@ describe('DCAPairSwapHandler', () => {
       });
       it('returns augments amount to swap', async () => {
         for (let i = 1; i <= 10; i++) {
-          expect(await DCAPairSwapHandler.swapAmountAccumulator(tokenA.address)).to.equal(swapAmountAccumulator);
+          expect(await DCAPairSwapHandler.swapAmountAccumulator(swapInterval, tokenA.address)).to.equal(swapAmountAccumulator);
           const amountToSwap = swapAmountAccumulator.add(swapAmountDeltas[i - 1]);
           expect(amountToSwap).to.be.gt(swapAmountAccumulator);
           expect(await DCAPairSwapHandler.getAmountToSwap(tokenA.address, i)).to.equal(amountToSwap);
@@ -313,7 +313,7 @@ describe('DCAPairSwapHandler', () => {
           await DCAPairSwapHandler.setSwapAmountDelta(tokenA.address, swap, swapAmountDelta);
         });
         it('calculates correctly the final amount to buy', async () => {
-          expect(await DCAPairSwapHandler.swapAmountAccumulator(tokenA.address)).to.equal(swapAmountAccumulator);
+          expect(await DCAPairSwapHandler.swapAmountAccumulator(swapInterval, tokenA.address)).to.equal(swapAmountAccumulator);
           const amountToSwap = await DCAPairSwapHandler.getAmountToSwap(tokenA.address, swap);
           expect(amountToSwap).to.be.lt(swapAmountAccumulator);
           expect(amountToSwap).to.equal(swapAmountAccumulator.add(swapAmountDelta));
@@ -331,7 +331,7 @@ describe('DCAPairSwapHandler', () => {
         });
         it('returns reduced amount to swap', async () => {
           for (let i = 1; i <= 10; i++) {
-            expect(await DCAPairSwapHandler.swapAmountAccumulator(tokenA.address)).to.equal(swapAmountAccumulator);
+            expect(await DCAPairSwapHandler.swapAmountAccumulator(swapInterval, tokenA.address)).to.equal(swapAmountAccumulator);
             const amountToSwap = swapAmountAccumulator.add(swapAmountDeltas[i - 1]);
             expect(amountToSwap).to.be.lt(swapAmountAccumulator);
             expect(await DCAPairSwapHandler.getAmountToSwap(tokenA.address, i)).to.equal(amountToSwap);
@@ -674,16 +674,16 @@ describe('DCAPairSwapHandler', () => {
         expect(await tokenB.balanceOf(DCAPairSwapHandler.address)).to.equal(initialPairBalanceTokenB);
       });
       then('swap was not registered on token a', async () => {
-        expect(await DCAPairSwapHandler.swapAmountDelta(tokenA.address, nextSwapToPerform)).to.not.be.equal(0);
+        expect(await DCAPairSwapHandler.swapAmountDelta(swapInterval, tokenA.address, nextSwapToPerform)).to.not.be.equal(0);
       });
       then('swap was not registered on token b', async () => {
-        expect(await DCAPairSwapHandler.swapAmountDelta(tokenB.address, nextSwapToPerform)).to.not.be.equal(0);
+        expect(await DCAPairSwapHandler.swapAmountDelta(swapInterval, tokenB.address, nextSwapToPerform)).to.not.be.equal(0);
       });
       then('last swap performed did not increase', async () => {
-        expect(await DCAPairSwapHandler.lastSwapPerformed()).to.equal(staticLastSwapPerformed);
+        expect(await DCAPairSwapHandler.lastSwapPerformed(swapInterval)).to.equal(staticLastSwapPerformed);
       });
       then('performed swaps did not increase', async () => {
-        expect(await DCAPairSwapHandler.performedSwaps()).to.equal((nextSwapToPerform as BigNumber).sub(1));
+        expect(await DCAPairSwapHandler.performedSwaps(swapInterval)).to.equal((nextSwapToPerform as BigNumber).sub(1));
       });
       thenInternalBalancesAreTheSameAsTokenBalances();
     });
@@ -1180,7 +1180,7 @@ describe('DCAPairSwapHandler', () => {
         await DCAPairSwapHandler.setInternalBalances(initialContractTokenABalance, initialContractTokenBBalance);
         initialSwapperTokenABalance = await tokenA.balanceOf(owner.address);
         initialSwapperTokenBBalance = await tokenB.balanceOf(owner.address);
-        initialLastSwapPerformed = await DCAPairSwapHandler.lastSwapPerformed();
+        initialLastSwapPerformed = await DCAPairSwapHandler.lastSwapPerformed(swapInterval);
 
         // Ideally, this would be done by a smart contract on the same tx as the swap
         if (tokenToBeProvidedBySwapper() === tokenA.address) {
@@ -1296,14 +1296,14 @@ describe('DCAPairSwapHandler', () => {
         }
       });
       then('register swaps from tokenA to tokenB with correct information', async () => {
-        const accumRatesPerUnit = await DCAPairSwapHandler.accumRatesPerUnit(tokenA.address, nextSwapToPerform);
-        expect(await DCAPairSwapHandler.swapAmountAccumulator(tokenA.address)).to.equal(amountToSwapOfTokenA);
+        const accumRatesPerUnit = await DCAPairSwapHandler.accumRatesPerUnit(swapInterval, tokenA.address, nextSwapToPerform);
+        expect(await DCAPairSwapHandler.swapAmountAccumulator(swapInterval, tokenA.address)).to.equal(amountToSwapOfTokenA);
         expect(accumRatesPerUnit[0]).to.not.equal(0);
         expect(accumRatesPerUnit[0]).to.equal(ratePerUnitAToB);
       });
       then('register swaps from tokenB to tokenA with correct information', async () => {
-        const accumRatesPerUnit = await DCAPairSwapHandler.accumRatesPerUnit(tokenB.address, nextSwapToPerform);
-        expect(await DCAPairSwapHandler.swapAmountAccumulator(tokenB.address)).to.equal(amountToSwapOfTokenB);
+        const accumRatesPerUnit = await DCAPairSwapHandler.accumRatesPerUnit(swapInterval, tokenB.address, nextSwapToPerform);
+        expect(await DCAPairSwapHandler.swapAmountAccumulator(swapInterval, tokenB.address)).to.equal(amountToSwapOfTokenB);
         expect(accumRatesPerUnit[0]).to.equal(ratePerUnitBToA);
       });
       then('sends token a fee correctly to fee recipient', async () => {
@@ -1313,10 +1313,10 @@ describe('DCAPairSwapHandler', () => {
         expect(await tokenB.balanceOf(feeRecipient.address)).to.equal(platformFeeTokenB);
       });
       then('updates performed swaps', async () => {
-        expect(await DCAPairSwapHandler.performedSwaps()).to.equal(nextSwapToPerform);
+        expect(await DCAPairSwapHandler.performedSwaps(swapInterval)).to.equal(nextSwapToPerform);
       });
       then('updates last swap performend timestamp', async () => {
-        expect(await DCAPairSwapHandler.lastSwapPerformed()).to.be.gt(initialLastSwapPerformed);
+        expect(await DCAPairSwapHandler.lastSwapPerformed(swapInterval)).to.be.gt(initialLastSwapPerformed);
       });
       then('emits event with correct information', async () => {
         const nextSwapInformation = (await readArgFromEvent(swapTx, 'Swapped', '_nextSwapInformation')) as NextSwapInfo;
