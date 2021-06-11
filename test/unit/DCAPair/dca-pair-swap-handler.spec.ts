@@ -122,7 +122,7 @@ describe('DCAPairSwapHandler', () => {
 
     when(title, () => {
       given(async () => {
-        await DCAPairSwapHandler.setAcummRatesPerUnit(token(), performedSwapBN.sub(1), [
+        await DCAPairSwapHandler.setAcummRatesPerUnit(swapInterval, token(), performedSwapBN.sub(1), [
           previousAccumRatesPerUnitBN,
           previousAccumRatesPerUnitMultiplierBN,
         ]);
@@ -286,10 +286,10 @@ describe('DCAPairSwapHandler', () => {
       const getRandomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min)) + min;
 
       beforeEach(async () => {
-        await DCAPairSwapHandler.setSwapAmountAccumulator(tokenA.address, swapAmountAccumulator);
+        await DCAPairSwapHandler.setSwapAmountAccumulator(swapInterval, tokenA.address, swapAmountAccumulator);
         for (let i = 1; i <= 10; i++) {
           swapAmountDeltas.push(BigNumber.from(`${getRandomInt(1, 9999999999)}`));
-          await DCAPairSwapHandler.setSwapAmountDelta(tokenA.address, BigNumber.from(i), swapAmountDeltas[i - 1]);
+          await DCAPairSwapHandler.setSwapAmountDelta(swapInterval, tokenA.address, BigNumber.from(i), swapAmountDeltas[i - 1]);
         }
       });
       it('returns augments amount to swap', async () => {
@@ -298,7 +298,7 @@ describe('DCAPairSwapHandler', () => {
           const amountToSwap = swapAmountAccumulator.add(swapAmountDeltas[i - 1]);
           expect(amountToSwap).to.be.gt(swapAmountAccumulator);
           expect(await DCAPairSwapHandler.getAmountToSwap(tokenA.address, i)).to.equal(amountToSwap);
-          await DCAPairSwapHandler.setSwapAmountAccumulator(tokenA.address, amountToSwap);
+          await DCAPairSwapHandler.setSwapAmountAccumulator(swapInterval, tokenA.address, amountToSwap);
           swapAmountAccumulator = amountToSwap;
         }
       });
@@ -309,8 +309,8 @@ describe('DCAPairSwapHandler', () => {
         const swapAmountDelta = constants.MIN_INT_256;
         const swap = BigNumber.from('1');
         beforeEach(async () => {
-          await DCAPairSwapHandler.setSwapAmountAccumulator(tokenA.address, swapAmountAccumulator);
-          await DCAPairSwapHandler.setSwapAmountDelta(tokenA.address, swap, swapAmountDelta);
+          await DCAPairSwapHandler.setSwapAmountAccumulator(swapInterval, tokenA.address, swapAmountAccumulator);
+          await DCAPairSwapHandler.setSwapAmountDelta(swapInterval, tokenA.address, swap, swapAmountDelta);
         });
         it('calculates correctly the final amount to buy', async () => {
           expect(await DCAPairSwapHandler.swapAmountAccumulator(swapInterval, tokenA.address)).to.equal(swapAmountAccumulator);
@@ -323,10 +323,10 @@ describe('DCAPairSwapHandler', () => {
         let swapAmountAccumulator = ethers.constants.MaxUint256.div(2);
         let swapAmountDeltas: BigNumber[] = [];
         beforeEach(async () => {
-          await DCAPairSwapHandler.setSwapAmountAccumulator(tokenA.address, swapAmountAccumulator);
+          await DCAPairSwapHandler.setSwapAmountAccumulator(swapInterval, tokenA.address, swapAmountAccumulator);
           for (let i = 1; i <= 10; i++) {
             swapAmountDeltas.push(BigNumber.from(`${Math.floor(Math.random() * 1000000) - 999999}`));
-            await DCAPairSwapHandler.setSwapAmountDelta(tokenA.address, BigNumber.from(i), swapAmountDeltas[i - 1]);
+            await DCAPairSwapHandler.setSwapAmountDelta(swapInterval, tokenA.address, BigNumber.from(i), swapAmountDeltas[i - 1]);
           }
         });
         it('returns reduced amount to swap', async () => {
@@ -335,7 +335,7 @@ describe('DCAPairSwapHandler', () => {
             const amountToSwap = swapAmountAccumulator.add(swapAmountDeltas[i - 1]);
             expect(amountToSwap).to.be.lt(swapAmountAccumulator);
             expect(await DCAPairSwapHandler.getAmountToSwap(tokenA.address, i)).to.equal(amountToSwap);
-            await DCAPairSwapHandler.setSwapAmountAccumulator(tokenA.address, amountToSwap);
+            await DCAPairSwapHandler.setSwapAmountAccumulator(swapInterval, tokenA.address, amountToSwap);
             swapAmountAccumulator = amountToSwap;
           }
         });
@@ -363,11 +363,11 @@ describe('DCAPairSwapHandler', () => {
     amountToSwapOfTokenA = toBN(amountToSwapOfTokenA, tokenA);
     amountToSwapOfTokenB = toBN(amountToSwapOfTokenB, tokenB);
     ratePerUnitBToA = toBN(ratePerUnitBToA, tokenA);
-    await DCAPairSwapHandler.setPerformedSwaps(nextSwapToPerform.sub(1));
-    await DCAPairSwapHandler.setSwapAmountAccumulator(tokenA.address, amountToSwapOfTokenA.div(2));
-    await DCAPairSwapHandler.setSwapAmountDelta(tokenA.address, nextSwapToPerform, amountToSwapOfTokenA.div(2));
-    await DCAPairSwapHandler.setSwapAmountAccumulator(tokenB.address, amountToSwapOfTokenB.div(2));
-    await DCAPairSwapHandler.setSwapAmountDelta(tokenB.address, nextSwapToPerform, amountToSwapOfTokenB.div(2));
+    await DCAPairSwapHandler.setPerformedSwaps(swapInterval, nextSwapToPerform.sub(1));
+    await DCAPairSwapHandler.setSwapAmountAccumulator(swapInterval, tokenA.address, amountToSwapOfTokenA.div(2));
+    await DCAPairSwapHandler.setSwapAmountDelta(swapInterval, tokenA.address, nextSwapToPerform, amountToSwapOfTokenA.div(2));
+    await DCAPairSwapHandler.setSwapAmountAccumulator(swapInterval, tokenB.address, amountToSwapOfTokenB.div(2));
+    await DCAPairSwapHandler.setSwapAmountDelta(swapInterval, tokenB.address, nextSwapToPerform, amountToSwapOfTokenB.div(2));
     await setOracleData({
       ratePerUnitBToA,
     });
@@ -642,7 +642,7 @@ describe('DCAPairSwapHandler', () => {
           await DCAPairSwapHandler.setBlockTimestamp(blockTimestamp);
         }
         swapper = await (await wallet.generateRandom()).connect(ethers.provider);
-        await DCAPairSwapHandler.setLastSwapPerformed(staticLastSwapPerformed);
+        await DCAPairSwapHandler.setLastSwapPerformed(swapInterval, staticLastSwapPerformed);
         await setNextSwapInfo({
           nextSwapToPerform,
           amountToSwapOfTokenA,
@@ -1168,7 +1168,7 @@ describe('DCAPairSwapHandler', () => {
         if (blockTimestamp) {
           await DCAPairSwapHandler.setBlockTimestamp(blockTimestamp);
         }
-        await DCAPairSwapHandler.setLastSwapPerformed(lastSwapPerformed ?? 0);
+        await DCAPairSwapHandler.setLastSwapPerformed(swapInterval, lastSwapPerformed ?? 0);
         await setNextSwapInfo({
           nextSwapToPerform,
           amountToSwapOfTokenA,
