@@ -103,11 +103,12 @@ interface IDCAPairSwapHandler {
 
   function oracle() external returns (ISlidingOracle);
 
-  function getNextSwapInfo() external view returns (NextSwapInformation memory _nextSwapInformation);
+  function getNextSwapInfo(uint32 _swapInterval) external view returns (NextSwapInformation memory _nextSwapInformation);
 
-  function swap() external;
+  function swap(uint32 _swapInterval) external;
 
   function swap(
+    uint32 _swapInterval,
     uint256 _amountToBorrowTokenA,
     uint256 _amountToBorrowTokenB,
     address _to,

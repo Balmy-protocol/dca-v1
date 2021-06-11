@@ -21,16 +21,21 @@ contract DCAPairSwapHandlerMock is DCAPairSwapHandler, DCAPairParametersMock {
   // SwapHandler
 
   function registerSwap(
+    uint32 _swapInterval,
     address _token,
     uint256 _internalAmountUsedToSwap,
     uint256 _ratePerUnit,
     uint32 _swapToRegister
   ) public {
-    _registerSwap(_token, _internalAmountUsedToSwap, _ratePerUnit, _swapToRegister);
+    _registerSwap(_swapInterval, _token, _internalAmountUsedToSwap, _ratePerUnit, _swapToRegister);
   }
 
-  function getAmountToSwap(address _tokenAddress, uint32 _swap) public view returns (uint256) {
-    return _getAmountToSwap(_tokenAddress, _swap);
+  function getAmountToSwap(
+    uint32 _swapInterval,
+    address _tokenAddress,
+    uint32 _swap
+  ) public view returns (uint256) {
+    return _getAmountToSwap(_swapInterval, _tokenAddress, _swap);
   }
 
   function setBlockTimestamp(uint256 _blockTimestamp) public {
@@ -44,11 +49,12 @@ contract DCAPairSwapHandlerMock is DCAPairSwapHandler, DCAPairParametersMock {
   // Mocks setters
 
   function addNewRatePerUnit(
+    uint32 _swapInterval,
     address _tokenAddress,
     uint32 _swap,
     uint256 _ratePerUnit
   ) public {
-    _addNewRatePerUnit(_tokenAddress, _swap, _ratePerUnit);
+    _addNewRatePerUnit(_swapInterval, _tokenAddress, _swap, _ratePerUnit);
   }
 
   function setSwapAmountAccumulator(
