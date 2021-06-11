@@ -20,8 +20,6 @@ interface IDCAPairParameters {
   ) external view returns (int256);
 
   function performedSwaps(uint32) external view returns (uint32);
-
-  function swapInterval() external view returns (uint32);
 }
 
 interface IDCAPairPositionHandler {

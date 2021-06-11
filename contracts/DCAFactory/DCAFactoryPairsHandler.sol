@@ -45,9 +45,7 @@ abstract contract DCAFactoryPairsHandler is IDCAFactoryPairsHandler {
     require(_tokenA != _tokenB, 'DCAFactory: identical addresses');
     (address _token0, address _token1) = _sortTokens(_tokenA, _tokenB);
     require(pairByTokensAndSwapInterval[_token0][_token1][_swapInterval] == address(0), 'DCAFactory: pair exists');
-    _pair = address(
-      new DCAPair(globalParameters, ISlidingOracle(address(0xe)), IERC20Detailed(_token0), IERC20Detailed(_token1), _swapInterval)
-    );
+    _pair = address(new DCAPair(globalParameters, ISlidingOracle(address(0xe)), IERC20Detailed(_token0), IERC20Detailed(_token1)));
     pairByTokensAndSwapInterval[_token0][_token1][_swapInterval] = _pair;
     pairsByTokens[_token0][_token1].push(_pair);
     allPairs.push(_pair);
