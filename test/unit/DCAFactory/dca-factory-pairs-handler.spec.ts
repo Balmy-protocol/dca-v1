@@ -156,7 +156,7 @@ describe('DCAFactoryPairsHandler', function () {
     });
   });
 
-  describe('sortTokens', () => {
+  describe.skip('sortTokens', () => {
     when('sorting token addresses', () => {
       let token0: string;
       let token1: string;

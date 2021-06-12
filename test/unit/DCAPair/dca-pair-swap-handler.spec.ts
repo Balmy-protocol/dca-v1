@@ -57,6 +57,7 @@ describe('DCAPairSwapHandler', () => {
       DCAGlobalParameters.address, // global parameters
       staticSlidingOracle.address // oracle
     );
+    await DCAGlobalParameters.addSwapIntervalsToAllowedList([swapInterval], ['NULL']);
   });
 
   describe('constructor', () => {

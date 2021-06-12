@@ -14,7 +14,7 @@ describe('DCAPositionHandler', () => {
   const POSITION_RATE_5 = 5;
   const POSITION_SWAPS_TO_PERFORM_10 = 10;
   const RATE_PER_UNIT_5 = 5;
-  const SWAP_INTERVAL = 0;
+  const SWAP_INTERVAL = 10;
 
   const INITIAL_TOKEN_A_BALANCE_CONTRACT = 100;
   const INITIAL_TOKEN_A_BALANCE_USER = 100;
@@ -66,6 +66,7 @@ describe('DCAPositionHandler', () => {
     await tokenA.mint(approved.address, tokenA.asUnits(INITIAL_TOKEN_A_BALANCE_USER));
     await tokenA.approveInternal(approved.address, DCAPositionHandler.address, tokenA.asUnits(1000));
     await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, PERFORMED_SWAPS_10);
+    await DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL], ['NULL']);
   });
 
   describe('constructor', () => {
@@ -95,6 +96,20 @@ describe('DCAPositionHandler', () => {
           rate: POSITION_RATE_5,
           swaps: POSITION_SWAPS_TO_PERFORM_10,
           error: 'DCAPair: invalid deposit address',
+        });
+      });
+    });
+
+    when('making a deposit with non-allowed interval', async () => {
+      given(async () => {
+        await DCAGlobalParameters.removeSwapIntervalsFromAllowedList([SWAP_INTERVAL]);
+      });
+      then('tx is reverted with messasge', async () => {
+        await depositShouldRevert({
+          address: tokenA.address,
+          rate: POSITION_RATE_5,
+          swaps: POSITION_SWAPS_TO_PERFORM_10,
+          error: 'DCAPair: interval not allowed',
         });
       });
     });

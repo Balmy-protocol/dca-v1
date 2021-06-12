@@ -27,7 +27,7 @@ abstract contract DCAPairPositionHandler is ReentrancyGuard, DCAPairParameters, 
     uint32 _swapInterval
   ) public override nonReentrant returns (uint256) {
     require(_tokenAddress == address(tokenA) || _tokenAddress == address(tokenB), 'DCAPair: invalid deposit address');
-    // TODO: validate that swap interval is allowed
+    require(globalParameters.isSwapIntervalAllowed(_swapInterval), 'DCAPair: interval not allowed');
     IERC20Detailed _from = _tokenAddress == address(tokenA) ? tokenA : tokenB;
     uint256 _amount = _rate * _amountOfSwaps;
     _from.safeTransferFrom(msg.sender, address(this), _amount);
