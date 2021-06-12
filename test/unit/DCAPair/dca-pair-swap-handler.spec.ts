@@ -9,7 +9,6 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { readArgFromEvent } from '../../utils/event-utils';
 import { TokenContract } from '../../utils/erc20';
 
-const MINIMUM_SWAP_INTERVAL = BigNumber.from('60');
 const APPLY_FEE = (bn: BigNumber) => bn.mul(3).div(1000);
 
 describe('DCAPairSwapHandler', () => {
@@ -55,9 +54,9 @@ describe('DCAPairSwapHandler', () => {
       tokenA.address,
       tokenB.address,
       DCAGlobalParameters.address, // global parameters
-      staticSlidingOracle.address, // oracle
-      swapInterval
+      staticSlidingOracle.address // oracle
     );
+    await DCAGlobalParameters.addSwapIntervalsToAllowedList([swapInterval], ['NULL']);
   });
 
   describe('constructor', () => {
@@ -65,7 +64,7 @@ describe('DCAPairSwapHandler', () => {
       then('reverts with message', async () => {
         await behaviours.deployShouldRevertWithZeroAddress({
           contract: DCAPairSwapHandlerContract,
-          args: [tokenA.address, tokenB.address, constants.ZERO_ADDRESS, staticSlidingOracle.address, MINIMUM_SWAP_INTERVAL],
+          args: [tokenA.address, tokenB.address, constants.ZERO_ADDRESS, staticSlidingOracle.address],
         });
       });
     });
@@ -73,7 +72,7 @@ describe('DCAPairSwapHandler', () => {
       then('reverts with message', async () => {
         await behaviours.deployShouldRevertWithZeroAddress({
           contract: DCAPairSwapHandlerContract,
-          args: [tokenA.address, tokenB.address, DCAGlobalParameters.address, constants.ZERO_ADDRESS, MINIMUM_SWAP_INTERVAL],
+          args: [tokenA.address, tokenB.address, DCAGlobalParameters.address, constants.ZERO_ADDRESS],
         });
       });
     });
@@ -85,17 +84,12 @@ describe('DCAPairSwapHandler', () => {
           tokenA.address,
           tokenB.address,
           DCAGlobalParameters.address, // global parameters
-          staticSlidingOracle.address,
-          MINIMUM_SWAP_INTERVAL
+          staticSlidingOracle.address
         );
       });
 
       it('oracle is set correctly', async () => {
         expect(await DCAPairSwapHandler.oracle()).to.equal(staticSlidingOracle.address);
-      });
-
-      it('swap interval is set correctly', async () => {
-        expect(await DCAPairSwapHandler.swapInterval()).to.equal(MINIMUM_SWAP_INTERVAL);
       });
     });
   });
