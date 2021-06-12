@@ -9,7 +9,6 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { readArgFromEvent } from '../../utils/event-utils';
 import { TokenContract } from '../../utils/erc20';
 
-const MINIMUM_SWAP_INTERVAL = BigNumber.from('60');
 const APPLY_FEE = (bn: BigNumber) => bn.mul(3).div(1000);
 
 describe('DCAPairSwapHandler', () => {
