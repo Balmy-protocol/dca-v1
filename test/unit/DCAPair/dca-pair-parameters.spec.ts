@@ -36,7 +36,7 @@ describe('DCAPairParameters', function () {
       initialAmount: utils.parseEther('1'),
     });
     DCAGlobalParameters = await DCAGlobalParametersContract.deploy(owner.address, constants.NOT_ZERO_ADDRESS, constants.NOT_ZERO_ADDRESS);
-    DCAPairParameters = await DCAPairParametersContract.deploy(DCAGlobalParameters.address, tokenA.address, tokenB.address, 0);
+    DCAPairParameters = await DCAPairParametersContract.deploy(DCAGlobalParameters.address, tokenA.address, tokenB.address);
   });
 
   describe('constructor', () => {
@@ -44,7 +44,7 @@ describe('DCAPairParameters', function () {
       then('deployment is reverted with reason', async () => {
         await behaviours.deployShouldRevertWithZeroAddress({
           contract: DCAPairParametersContract,
-          args: [constants.ZERO_ADDRESS, tokenA.address, tokenB.address, 0],
+          args: [constants.ZERO_ADDRESS, tokenA.address, tokenB.address],
         });
       });
     });
@@ -52,7 +52,7 @@ describe('DCAPairParameters', function () {
       then('deployment is reverted with reason', async () => {
         await behaviours.deployShouldRevertWithZeroAddress({
           contract: DCAPairParametersContract,
-          args: [constants.NOT_ZERO_ADDRESS, constants.ZERO_ADDRESS, tokenB.address, 0],
+          args: [constants.NOT_ZERO_ADDRESS, constants.ZERO_ADDRESS, tokenB.address],
         });
       });
     });
@@ -60,7 +60,7 @@ describe('DCAPairParameters', function () {
       then('deployment is reverted with reason', async () => {
         await behaviours.deployShouldRevertWithZeroAddress({
           contract: DCAPairParametersContract,
-          args: [constants.NOT_ZERO_ADDRESS, tokenA.address, constants.ZERO_ADDRESS, 0],
+          args: [constants.NOT_ZERO_ADDRESS, tokenA.address, constants.ZERO_ADDRESS],
         });
       });
     });
@@ -68,7 +68,7 @@ describe('DCAPairParameters', function () {
       let deploymentTx: TransactionResponse;
       let deployedContract: Contract;
       given(async () => {
-        const deployment = await contracts.deploy(DCAPairParametersContract, [DCAGlobalParameters.address, tokenA.address, tokenB.address, 0]);
+        const deployment = await contracts.deploy(DCAPairParametersContract, [DCAGlobalParameters.address, tokenA.address, tokenB.address]);
         deploymentTx = deployment.tx;
         deployedContract = deployment.contract;
       });
