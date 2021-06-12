@@ -155,6 +155,7 @@ describe('DCAPositionHandler', () => {
             tokenA.address,
             tokenA.asUnits(POSITION_RATE_5),
             PERFORMED_SWAPS_10 + 1,
+            SWAP_INTERVAL,
             PERFORMED_SWAPS_10 + POSITION_SWAPS_TO_PERFORM_10
           );
       });

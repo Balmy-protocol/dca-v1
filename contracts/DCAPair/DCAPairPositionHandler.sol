@@ -35,7 +35,7 @@ abstract contract DCAPairPositionHandler is ReentrancyGuard, DCAPairParameters, 
     _idCounter += 1;
     _safeMint(msg.sender, _idCounter);
     (uint32 _startingSwap, uint32 _finalSwap) = _addPosition(_idCounter, _tokenAddress, _rate, _amountOfSwaps, 0, _swapInterval);
-    emit Deposited(msg.sender, _idCounter, _tokenAddress, _rate, _startingSwap, _finalSwap);
+    emit Deposited(msg.sender, _idCounter, _tokenAddress, _rate, _startingSwap, _swapInterval, _finalSwap);
     return _idCounter;
   }
 
