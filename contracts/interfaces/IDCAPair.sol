@@ -33,7 +33,15 @@ interface IDCAPairPositionHandler {
   }
 
   event Terminated(address indexed _user, uint256 _dcaId, uint256 _returnedUnswapped, uint256 _returnedSwapped);
-  event Deposited(address indexed _user, uint256 _dcaId, address _fromToken, uint192 _rate, uint32 _startingSwap, uint32 _lastSwap); // TODO: add swap interval
+  event Deposited(
+    address indexed _user,
+    uint256 _dcaId,
+    address _fromToken,
+    uint192 _rate,
+    uint32 _startingSwap,
+    uint32 _swapInterval,
+    uint32 _lastSwap
+  );
   event Withdrew(address indexed _user, uint256 _dcaId, address _token, uint256 _amount);
   event WithdrewMany(address indexed _user, uint256[] _dcaIds, uint256 _swappedTokenA, uint256 _swappedTokenB);
   event Modified(address indexed _user, uint256 _dcaId, uint192 _rate, uint32 _startingSwap, uint32 _lastSwap);
