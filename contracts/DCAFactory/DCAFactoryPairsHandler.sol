@@ -7,7 +7,7 @@ import '../interfaces/IDCAFactory.sol';
 import '../interfaces/IDCAGlobalParameters.sol';
 
 abstract contract DCAFactoryPairsHandler is IDCAFactoryPairsHandler {
-  mapping(address => mapping(address => address)) internal _pairByTokens;
+  mapping(address => mapping(address => address)) internal _pairByTokens; // token0 => token1 => pair
   address[] public override allPairs;
   IDCAGlobalParameters public override globalParameters;
 
