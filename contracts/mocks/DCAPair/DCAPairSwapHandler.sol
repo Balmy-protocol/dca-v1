@@ -6,7 +6,7 @@ import '../../DCAPair/DCAPairSwapHandler.sol';
 import './DCAPairParameters.sol';
 
 contract DCAPairSwapHandlerMock is DCAPairSwapHandler, DCAPairParametersMock {
-  uint256 private _customTimestamp;
+  uint32 private _customTimestamp;
 
   constructor(
     IERC20Detailed _token0,
@@ -37,11 +37,11 @@ contract DCAPairSwapHandlerMock is DCAPairSwapHandler, DCAPairParametersMock {
     return _getAmountToSwap(_swapInterval, _tokenAddress, _swap);
   }
 
-  function setBlockTimestamp(uint256 _blockTimestamp) public {
+  function setBlockTimestamp(uint32 _blockTimestamp) public {
     _customTimestamp = _blockTimestamp;
   }
 
-  function _getTimestamp() internal view override returns (uint256 _blockTimestamp) {
+  function _getTimestamp() internal view override returns (uint32 _blockTimestamp) {
     _blockTimestamp = (_customTimestamp > 0) ? _customTimestamp : super._getTimestamp();
   }
 
@@ -64,7 +64,7 @@ contract DCAPairSwapHandlerMock is DCAPairSwapHandler, DCAPairParametersMock {
     swapAmountAccumulator[_swapInterval][_tokenAddress] = _swapAmountAccumulator;
   }
 
-  function setLastSwapPerformed(uint32 _swapInterval, uint256 _lastSwapPerformend) public {
+  function setLastSwapPerformed(uint32 _swapInterval, uint32 _lastSwapPerformend) public {
     lastSwapPerformed[_swapInterval] = _lastSwapPerformend;
   }
 }

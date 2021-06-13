@@ -103,7 +103,7 @@ interface IDCAPairSwapHandler {
     NextSwapInformation _nextSwapInformation
   );
 
-  function lastSwapPerformed(uint32) external view returns (uint256);
+  function lastSwapPerformed(uint32) external view returns (uint32);
 
   function swapAmountAccumulator(uint32, address) external view returns (uint256);
 

@@ -8,7 +8,7 @@ import { when, then, given } from '../../utils/bdd';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 import { TokenContract } from '../../utils/erc20';
 
-// TODO: Test swap interval properly
+// TODO: Test swap interval does not modify other intervals state
 describe('DCAPositionHandler', () => {
   const PERFORMED_SWAPS_10 = 10;
   const POSITION_RATE_5 = 5;
