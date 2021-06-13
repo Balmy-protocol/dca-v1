@@ -19,19 +19,17 @@ abstract contract DCAPairParameters is IDCAPairParameters {
   IDCAGlobalParameters public override globalParameters;
   IERC20Detailed public override tokenA;
   IERC20Detailed public override tokenB;
-  uint32 public override swapInterval;
 
   // Tracking
-  mapping(address => mapping(uint32 => int256)) public override swapAmountDelta;
-  uint32 public override performedSwaps; // Note: If we had swaps every minute, for 100 years, uint32 would still cover it
-  mapping(address => mapping(uint32 => uint256[2])) internal _accumRatesPerUnit;
+  mapping(uint32 => mapping(address => mapping(uint32 => int256))) public override swapAmountDelta; // swap interval => from token => swap number => delta
+  mapping(uint32 => uint32) public override performedSwaps; // swap interval => performed swaps
+  mapping(uint32 => mapping(address => mapping(uint32 => uint256[2]))) internal _accumRatesPerUnit; // swap interval => from token => swap number => accum
   mapping(address => uint256) internal _balances;
 
   constructor(
     IDCAGlobalParameters _globalParameters,
     IERC20Detailed _tokenA,
-    IERC20Detailed _tokenB,
-    uint32 _swapInterval
+    IERC20Detailed _tokenB
   ) {
     require(address(_globalParameters) != address(0), 'DCAPair: zero address');
     require(address(_tokenA) != address(0), 'DCAPair: zero address');
@@ -42,7 +40,6 @@ abstract contract DCAPairParameters is IDCAPairParameters {
     tokenB = _tokenB;
     _magnitudeA = 10**_tokenA.decimals();
     _magnitudeB = 10**_tokenB.decimals();
-    swapInterval = _swapInterval;
   }
 
   function _getFeeFromAmount(uint32 _feeAmount, uint256 _amount) internal view returns (uint256) {
