@@ -14,7 +14,7 @@ describe('DCAPositionHandler', () => {
   const POSITION_RATE_5 = 5;
   const POSITION_SWAPS_TO_PERFORM_10 = 10;
   const RATE_PER_UNIT_5 = 5;
-  const SWAP_INTERVAL = 0;
+  const SWAP_INTERVAL = 10;
 
   const INITIAL_TOKEN_A_BALANCE_CONTRACT = 100;
   const INITIAL_TOKEN_A_BALANCE_USER = 100;
@@ -65,7 +65,8 @@ describe('DCAPositionHandler', () => {
     );
     await tokenA.mint(approved.address, tokenA.asUnits(INITIAL_TOKEN_A_BALANCE_USER));
     await tokenA.approveInternal(approved.address, DCAPositionHandler.address, tokenA.asUnits(1000));
-    await DCAPositionHandler.setPerformedSwaps(PERFORMED_SWAPS_10);
+    await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, PERFORMED_SWAPS_10);
+    await DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL], ['NULL']);
   });
 
   describe('constructor', () => {
@@ -95,6 +96,20 @@ describe('DCAPositionHandler', () => {
           rate: POSITION_RATE_5,
           swaps: POSITION_SWAPS_TO_PERFORM_10,
           error: 'DCAPair: invalid deposit address',
+        });
+      });
+    });
+
+    when('making a deposit with non-allowed interval', async () => {
+      given(async () => {
+        await DCAGlobalParameters.removeSwapIntervalsFromAllowedList([SWAP_INTERVAL]);
+      });
+      then('tx is reverted with messasge', async () => {
+        await depositShouldRevert({
+          address: tokenA.address,
+          rate: POSITION_RATE_5,
+          swaps: POSITION_SWAPS_TO_PERFORM_10,
+          error: 'DCAPair: interval not allowed',
         });
       });
     });
@@ -140,6 +155,7 @@ describe('DCAPositionHandler', () => {
             tokenA.address,
             tokenA.asUnits(POSITION_RATE_5),
             PERFORMED_SWAPS_10 + 1,
+            SWAP_INTERVAL,
             PERFORMED_SWAPS_10 + POSITION_SWAPS_TO_PERFORM_10
           );
       });
@@ -788,7 +804,7 @@ describe('DCAPositionHandler', () => {
 
       given(async () => {
         const { dcaId } = await deposit(tokenA, 1, 1);
-        await DCAPositionHandler.setPerformedSwaps(PERFORMED_SWAPS_10 + 1);
+        await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, PERFORMED_SWAPS_10 + 1);
         await setRatePerUnit({
           accumRate: MAX.add(1),
           rateMultiplier: 0,
@@ -811,7 +827,7 @@ describe('DCAPositionHandler', () => {
 
       given(async () => {
         ({ dcaId } = await deposit(tokenA, 1, 1));
-        await DCAPositionHandler.setPerformedSwaps(PERFORMED_SWAPS_10 + 1);
+        await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, PERFORMED_SWAPS_10 + 1);
         await setRatePerUnit({
           accumRate: MAX,
           rateMultiplier: 0,
@@ -861,7 +877,7 @@ describe('DCAPositionHandler', () => {
           onSwap: PERFORMED_SWAPS_10 + 2,
         });
 
-        await DCAPositionHandler.setPerformedSwaps(PERFORMED_SWAPS_10 + 3);
+        await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, PERFORMED_SWAPS_10 + 3);
 
         // It shouldn't revert, since the position ended before the overflow
         const swapped = await DCAPositionHandler.calculateSwapped(dcaId);
@@ -977,7 +993,7 @@ describe('DCAPositionHandler', () => {
     }) {
       const { dcaId } = await deposit(tokenA, 1, 1);
       if (fee !== undefined) await DCAGlobalParameters.setSwapFee(fee);
-      await DCAPositionHandler.setPerformedSwaps(PERFORMED_SWAPS_10 + 1);
+      await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, PERFORMED_SWAPS_10 + 1);
       if (accumRate < 0) {
         await setRatePerUnit({
           accumRate: BigNumber.isBigNumber(accumRate) ? accumRate.abs() : tokenB.asUnits(Math.abs(accumRate)),
@@ -1033,6 +1049,7 @@ describe('DCAPositionHandler', () => {
     onSwap: number;
   }) {
     await DCAPositionHandler.setRatePerUnit(
+      SWAP_INTERVAL,
       tokenA.address,
       onSwap,
       BigNumber.isBigNumber(accumRate) ? accumRate : tokenB.asUnits(accumRate),
@@ -1179,8 +1196,8 @@ describe('DCAPositionHandler', () => {
   }) {
     const fromTokenReal = fromToken ?? tokenA;
     const toToken = fromTokenReal === tokenA ? tokenB : tokenA;
-    await DCAPositionHandler.setPerformedSwaps(swap);
-    await DCAPositionHandler.setRatePerUnit(fromTokenReal.address, swap, toToken.asUnits(ratePerUnit), 0);
+    await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, swap);
+    await DCAPositionHandler.setRatePerUnit(SWAP_INTERVAL, fromTokenReal.address, swap, toToken.asUnits(ratePerUnit), 0);
     await fromTokenReal.burn(DCAPositionHandler.address, fromTokenReal.asUnits(amount));
     await toToken.mint(DCAPositionHandler.address, await withFeeApplied(toToken.asUnits(amount * ratePerUnit))); // We calculate and subtract the fee, similarly to how it would be when not unit tested
     await DCAPositionHandler.setInternalBalances(

@@ -8,9 +8,8 @@ contract DCAPairParametersMock is DCAPairParameters {
   constructor(
     IDCAGlobalParameters _globalParameters,
     IERC20Detailed _tokenA,
-    IERC20Detailed _tokenB,
-    uint32 _swapInterval
-  ) DCAPairParameters(_globalParameters, _tokenA, _tokenB, _swapInterval) {}
+    IERC20Detailed _tokenB
+  ) DCAPairParameters(_globalParameters, _tokenA, _tokenB) {}
 
   // Mocks setters
 
@@ -32,19 +31,21 @@ contract DCAPairParametersMock is DCAPairParameters {
   }
 
   function setSwapAmountDelta(
+    uint32 _swapInterval,
     address _tokenAddress,
     uint32 _swap,
     int256 _delta
   ) public {
-    swapAmountDelta[swapInterval][_tokenAddress][_swap] = _delta;
+    swapAmountDelta[_swapInterval][_tokenAddress][_swap] = _delta;
   }
 
   function setAcummRatesPerUnit(
+    uint32 _swapInterval,
     address _tokenAddress,
     uint32 _swap,
     uint256[2] memory _accumRatePerUnit
   ) public {
-    _accumRatesPerUnit[swapInterval][_tokenAddress][_swap] = _accumRatePerUnit;
+    _accumRatesPerUnit[_swapInterval][_tokenAddress][_swap] = _accumRatePerUnit;
   }
 
   function accumRatesPerUnit(
@@ -55,17 +56,18 @@ contract DCAPairParametersMock is DCAPairParameters {
     return _accumRatesPerUnit[_swapInterval][_tokenAddress][_swap];
   }
 
-  function setPerformedSwaps(uint32 _performedSwaps) public {
-    performedSwaps[swapInterval] = _performedSwaps;
+  function setPerformedSwaps(uint32 _swapInterval, uint32 _performedSwaps) public {
+    performedSwaps[_swapInterval] = _performedSwaps;
   }
 
   function setRatePerUnit(
+    uint32 _swapInterval,
     address _tokenAddress,
     uint32 _swap,
     uint256 _rate,
     uint256 _rateMultiplier
   ) public {
-    _accumRatesPerUnit[swapInterval][_tokenAddress][_swap] = [_rate, _rateMultiplier];
+    _accumRatesPerUnit[_swapInterval][_tokenAddress][_swap] = [_rate, _rateMultiplier];
   }
 
   function getFeeFromAmount(uint32 _feeAmount, uint256 _amount) public view returns (uint256) {
