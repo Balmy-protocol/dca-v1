@@ -40,6 +40,8 @@ contract DCATokenDescriptor is IDCATokenDescriptor {
           tokenB: address(_tokenA),
           tokenADecimals: _tokenA.decimals(),
           tokenBDecimals: _tokenB.decimals(),
+          tokenASymbol: _tokenA.symbol(),
+          tokenBSymbol: _tokenB.symbol(),
           swapInterval: _swapInterval,
           swapsExecuted: _swapsExecuted,
           swapped: _swapped,

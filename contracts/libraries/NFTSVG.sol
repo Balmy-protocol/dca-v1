@@ -46,33 +46,33 @@ library NFTSVG {
         '<linearGradient x1="118.1%" y1="10.5%" x2="-18.1%" y2="89.5%" gradientUnits="userSpaceOnUse" id="LinearGradient">',
         '<stop stop-color="rgba(13, 5, 20, 1)" offset="0"></stop>',
         '<stop stop-color="rgba(47, 19, 66, 1)" offset="0.7"></stop>',
-        '<stop stop-color="rgba(35, 17, 51, 1)" offset="1"></stop>'
-        '</linearGradient>'
-        '<clipPath id="corners">'
-        '<rect width="290" height="560" rx="40" ry="40" />'
-        '</clipPath>'
-        '<path id="text-path-a" d="M40 12 H250 A28 28 0 0 1 278 40 V520 A28 28 0 0 1 250 548 H40 A28 28 0 0 1 12 520 V40 A28 28 0 0 1 40 12 z" />'
-        '<mask id="none" maskContentUnits="objectBoundingBox">'
-        '<rect width="1" height="1" fill="white" />'
-        '</mask>'
-        '<linearGradient id="grad-symbol">'
-        '<stop offset="0.8" stop-color="white" stop-opacity="1" />'
-        '<stop offset=".95" stop-color="white" stop-opacity="0" />'
-        '</linearGradient>'
-        '<mask id="fade-symbol" maskContentUnits="userSpaceOnUse">'
-        '<rect width="290px" height="200px" fill="url(#grad-symbol)" />'
-        '</mask>'
+        '<stop stop-color="rgba(35, 17, 51, 1)" offset="1"></stop>',
+        '</linearGradient>',
+        '<clipPath id="corners">',
+        '<rect width="290" height="560" rx="40" ry="40" />',
+        '</clipPath>',
+        '<path id="text-path-a" d="M40 12 H250 A28 28 0 0 1 278 40 V520 A28 28 0 0 1 250 548 H40 A28 28 0 0 1 12 520 V40 A28 28 0 0 1 40 12 z" />',
+        '<mask id="none" maskContentUnits="objectBoundingBox">',
+        '<rect width="1" height="1" fill="white" />',
+        '</mask>',
+        '<linearGradient id="grad-symbol">',
+        '<stop offset="0.8" stop-color="white" stop-opacity="1" />',
+        '<stop offset=".95" stop-color="white" stop-opacity="0" />',
+        '</linearGradient>',
+        '<mask id="fade-symbol" maskContentUnits="userSpaceOnUse">',
+        '<rect width="290px" height="200px" fill="url(#grad-symbol)" />',
+        '</mask>',
         '</defs>',
-        '<g clip-path="url(#corners)">'
-        '<rect width="290" height="560" x="0" y="0" fill="url(#LinearGradient)"></rect>'
-        '<path d="M290 0L248.61 0L290 61.48z" fill="rgba(255, 255, 255, .1)"></path>'
-        '<path d="M248.61 0L290 61.48L290 189.35999999999999L200.75 0z" fill="rgba(255, 255, 255, .075)"></path>'
-        '<path d="M200.75 0L290 189.35999999999999L290 294.91999999999996L112.52 0z" fill="rgba(255, 255, 255, .05)"></path>'
-        '<path d="M112.51999999999998 0L290 294.91999999999996L290 357.79999999999995L32.78999999999998 0z" fill="rgba(255, 255, 255, .025)"></path>'
-        '<path d="M0 560L40.27 560L0 402.35z" fill="rgba(0, 0, 0, .1)"></path>'
-        '<path d="M0 402.35L40.27 560L137.96 560L0 221.89000000000001z" fill="rgba(0, 0, 0, .075)"></path>'
-        '<path d="M0 221.89L137.96 560L153.85600000000002 560L0 183.92z" fill="rgba(0, 0, 0, .05)"></path>'
-        '<path d="M0 183.91999999999996L153.85000000000002 560L156.66000000000003 560L0 151.61999999999995z" fill="rgba(0, 0, 0, .025)"></path>'
+        '<g clip-path="url(#corners)">',
+        '<rect width="290" height="560" x="0" y="0" fill="url(#LinearGradient)"></rect>',
+        '<path d="M290 0L248.61 0L290 61.48z" fill="rgba(255, 255, 255, .1)"></path>',
+        '<path d="M248.61 0L290 61.48L290 189.35999999999999L200.75 0z" fill="rgba(255, 255, 255, .075)"></path>',
+        '<path d="M200.75 0L290 189.35999999999999L290 294.91999999999996L112.52 0z" fill="rgba(255, 255, 255, .05)"></path>',
+        '<path d="M112.51999999999998 0L290 294.91999999999996L290 357.79999999999995L32.78999999999998 0z" fill="rgba(255, 255, 255, .025)"></path>',
+        '<path d="M0 560L40.27 560L0 402.35z" fill="rgba(0, 0, 0, .1)"></path>',
+        '<path d="M0 402.35L40.27 560L137.96 560L0 221.89000000000001z" fill="rgba(0, 0, 0, .075)"></path>',
+        '<path d="M0 221.89L137.96 560L153.85600000000002 560L0 183.92z" fill="rgba(0, 0, 0, .05)"></path>',
+        '<path d="M0 183.91999999999996L153.85000000000002 560L156.66000000000003 560L0 151.61999999999995z" fill="rgba(0, 0, 0, .025)"></path>',
         '</g>'
       )
     );

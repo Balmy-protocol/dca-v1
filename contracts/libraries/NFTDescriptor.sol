@@ -1,9 +1,8 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.7.0;
 pragma abicoder v2;
 
 import '@openzeppelin/contracts/utils/Strings.sol';
-import '@uniswap/lib/contracts/libraries/SafeERC20Namer.sol';
 import 'base64-sol/base64.sol';
 import './NFTSVG.sol';
 
@@ -18,6 +17,8 @@ library NFTDescriptor {
     address tokenB;
     uint8 tokenADecimals;
     uint8 tokenBDecimals;
+    string tokenASymbol;
+    string tokenBSymbol;
     uint32 swapInterval;
     uint32 swapsExecuted;
     uint32 swapsLeft;
@@ -29,21 +30,19 @@ library NFTDescriptor {
   }
 
   function constructTokenURI(ConstructTokenURIParams memory _params) public pure returns (string memory) {
-    string memory _tokenASymbol = _escapeQuotes(SafeERC20Namer.tokenSymbol(_params.tokenA));
-    string memory _tokenBSymbol = _escapeQuotes(SafeERC20Namer.tokenSymbol(_params.tokenB));
-    string memory _name = _generateName(_params, _tokenASymbol, _tokenBSymbol);
+    string memory _name = _generateName(_params);
 
     string memory _description =
       _generateDescription(
-        _tokenASymbol,
-        _tokenBSymbol,
+        _params.tokenASymbol,
+        _params.tokenBSymbol,
         addressToString(_params.pair),
         addressToString(_params.tokenA),
         addressToString(_params.tokenB),
         _params.swapInterval,
         _params.tokenId
       );
-    string memory image = Base64.encode(bytes(_generateSVGImage(_params, _tokenASymbol, _tokenBSymbol)));
+    string memory image = Base64.encode(bytes(_generateSVGImage(_params)));
 
     return
       string(
@@ -127,12 +126,9 @@ library NFTDescriptor {
       );
   }
 
-  function _generateName(
-    ConstructTokenURIParams memory _params,
-    string memory _tokenASymbol,
-    string memory _tokenBSymbol
-  ) private pure returns (string memory) {
-    return string(abi.encodePacked('Mean Finance DCA - ', _params.swapInterval.toString(), ' - ', _tokenASymbol, '/', _tokenBSymbol));
+  function _generateName(ConstructTokenURIParams memory _params) private pure returns (string memory) {
+    return
+      string(abi.encodePacked('Mean Finance DCA - ', _params.swapInterval.toString(), ' - ', _params.tokenASymbol, '/', _params.tokenBSymbol));
   }
 
   struct DecimalStringParams {
@@ -242,7 +238,7 @@ library NFTDescriptor {
     return _generateDecimalString(params);
   }
 
-  function addressToString(address _addr) internal view returns (string memory) {
+  function addressToString(address _addr) internal pure returns (string memory) {
     bytes memory s = new bytes(40);
     for (uint256 i = 0; i < 20; i++) {
       bytes1 b = bytes1(uint8(uint256(uint160(_addr)) / (2**(8 * (19 - i)))));
@@ -254,29 +250,25 @@ library NFTDescriptor {
     return string(s);
   }
 
-  function _char(bytes1 b) private view returns (bytes1 c) {
+  function _char(bytes1 b) private pure returns (bytes1 c) {
     if (uint8(b) < 10) return bytes1(uint8(b) + 0x30);
     else return bytes1(uint8(b) + 0x57);
   }
 
-  function _generateSVGImage(
-    ConstructTokenURIParams memory _params,
-    string memory _tokenASymbol,
-    string memory _tokenBSymbol
-  ) private pure returns (string memory svg) {
+  function _generateSVGImage(ConstructTokenURIParams memory _params) private pure returns (string memory svg) {
     string memory _fromSymbol;
     string memory _toSymbol;
     uint8 _fromDecimals;
     uint8 _toDecimals;
     if (_params.fromA) {
-      _fromSymbol = _tokenASymbol;
+      _fromSymbol = _params.tokenASymbol;
       _fromDecimals = _params.tokenADecimals;
-      _toSymbol = _tokenBSymbol;
+      _toSymbol = _params.tokenBSymbol;
       _toDecimals = _params.tokenBDecimals;
     } else {
-      _fromSymbol = _tokenBSymbol;
+      _fromSymbol = _params.tokenBSymbol;
       _fromDecimals = _params.tokenBDecimals;
-      _toSymbol = _tokenASymbol;
+      _toSymbol = _params.tokenASymbol;
       _toDecimals = _params.tokenADecimals;
     }
     NFTSVG.SVGParams memory _svgParams =
@@ -284,8 +276,8 @@ library NFTDescriptor {
         tokenId: _params.tokenId,
         tokenA: addressToString(_params.tokenA),
         tokenB: addressToString(_params.tokenB),
-        tokenASymbol: _tokenASymbol,
-        tokenBSymbol: _tokenBSymbol,
+        tokenASymbol: _params.tokenASymbol,
+        tokenBSymbol: _params.tokenBSymbol,
         interval: _params.swapInterval.toString(),
         swapsExecuted: _params.swapsExecuted,
         swapsLeft: _params.swapsLeft,

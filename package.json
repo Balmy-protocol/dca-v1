@@ -41,7 +41,6 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.1.0",
-    "@uniswap/lib": "^4.0.1-alpha",
     "base64-sol": "^1.0.1"
   },
   "devDependencies": {
