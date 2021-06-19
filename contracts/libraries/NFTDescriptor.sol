@@ -1,0 +1,300 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity >=0.7.0;
+pragma abicoder v2;
+
+import '@openzeppelin/contracts/utils/Strings.sol';
+import '@uniswap/lib/contracts/libraries/SafeERC20Namer.sol';
+import 'base64-sol/base64.sol';
+import './NFTSVG.sol';
+
+// Based on Uniswap's NFTDescriptor
+library NFTDescriptor {
+  using Strings for uint256;
+  using Strings for uint32;
+
+  struct ConstructTokenURIParams {
+    address pair;
+    address tokenA;
+    address tokenB;
+    uint8 tokenADecimals;
+    uint8 tokenBDecimals;
+    uint32 swapInterval;
+    uint32 swapsExecuted;
+    uint32 swapsLeft;
+    uint256 tokenId;
+    uint256 swapped;
+    uint256 remaining;
+    uint192 rate;
+    bool fromA;
+  }
+
+  function constructTokenURI(ConstructTokenURIParams memory _params) public pure returns (string memory) {
+    string memory _tokenASymbol = _escapeQuotes(SafeERC20Namer.tokenSymbol(_params.tokenA));
+    string memory _tokenBSymbol = _escapeQuotes(SafeERC20Namer.tokenSymbol(_params.tokenB));
+    string memory _name = _generateName(_params, _tokenASymbol, _tokenBSymbol);
+
+    string memory _description =
+      _generateDescription(
+        _tokenASymbol,
+        _tokenBSymbol,
+        addressToString(_params.pair),
+        addressToString(_params.tokenA),
+        addressToString(_params.tokenB),
+        _params.swapInterval,
+        _params.tokenId
+      );
+    string memory image = Base64.encode(bytes(_generateSVGImage(_params, _tokenASymbol, _tokenBSymbol)));
+
+    return
+      string(
+        abi.encodePacked(
+          'data:application/json;base64,',
+          Base64.encode(
+            bytes(
+              abi.encodePacked(
+                '{"name":"',
+                _name,
+                '", "description":"',
+                _description,
+                '", "image": "',
+                'data:image/svg+xml;base64,',
+                image,
+                '"}'
+              )
+            )
+          )
+        )
+      );
+  }
+
+  function _escapeQuotes(string memory _symbol) private pure returns (string memory) {
+    bytes memory symbolBytes = bytes(_symbol);
+    uint8 quotesCount = 0;
+    for (uint8 i = 0; i < symbolBytes.length; i++) {
+      if (symbolBytes[i] == '"') {
+        quotesCount++;
+      }
+    }
+    if (quotesCount > 0) {
+      bytes memory escapedBytes = new bytes(symbolBytes.length + (quotesCount));
+      uint256 index;
+      for (uint8 i = 0; i < symbolBytes.length; i++) {
+        if (symbolBytes[i] == '"') {
+          escapedBytes[index++] = '\\';
+        }
+        escapedBytes[index++] = symbolBytes[i];
+      }
+      return string(escapedBytes);
+    }
+    return _symbol;
+  }
+
+  function _generateDescription(
+    string memory _tokenASymbol,
+    string memory _tokenBSymbol,
+    string memory _pairAddress,
+    string memory _tokenAAddress,
+    string memory _tokenBAddress,
+    uint32 _interval,
+    uint256 _tokenId
+  ) private pure returns (string memory) {
+    return
+      string(
+        abi.encodePacked(
+          'This NFT represents a liquidity position in a Mean Finance DCA ',
+          _tokenASymbol,
+          '-',
+          _tokenBSymbol,
+          ' pair. ',
+          'The owner of this NFT can modify or redeem the position.\\n',
+          '\\nPair Address: ',
+          _pairAddress,
+          '\\n',
+          _tokenASymbol,
+          ' Address: ',
+          _tokenAAddress,
+          '\\n',
+          _tokenBSymbol,
+          ' Address: ',
+          _tokenBAddress,
+          '\\nSwap interval: ',
+          _interval.toString(),
+          '\\nToken ID: ',
+          _tokenId.toString(),
+          '\\n\\n',
+          unicode'⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated.'
+        )
+      );
+  }
+
+  function _generateName(
+    ConstructTokenURIParams memory _params,
+    string memory _tokenASymbol,
+    string memory _tokenBSymbol
+  ) private pure returns (string memory) {
+    return string(abi.encodePacked('Mean Finance DCA - ', _params.swapInterval.toString(), ' - ', _tokenASymbol, '/', _tokenBSymbol));
+  }
+
+  struct DecimalStringParams {
+    // significant figures of decimal
+    uint256 sigfigs;
+    // length of decimal string
+    uint8 bufferLength;
+    // ending index for significant figures (funtion works backwards when copying sigfigs)
+    uint8 sigfigIndex;
+    // index of decimal place (0 if no decimal)
+    uint8 decimalIndex;
+    // start index for trailing/leading 0's for very small/large numbers
+    uint8 zerosStartIndex;
+    // end index for trailing/leading 0's for very small/large numbers
+    uint8 zerosEndIndex;
+    // true if decimal number is less than one
+    bool isLessThanOne;
+    // true if string should include "%"
+    bool isPercent;
+  }
+
+  function _generateDecimalString(DecimalStringParams memory params) private pure returns (string memory) {
+    bytes memory buffer = new bytes(params.bufferLength);
+    if (params.isPercent) {
+      buffer[buffer.length - 1] = '%';
+    }
+    if (params.isLessThanOne) {
+      buffer[0] = '0';
+      buffer[1] = '.';
+    }
+
+    // add leading/trailing 0's
+    for (uint256 zerosCursor = params.zerosStartIndex; zerosCursor < params.zerosEndIndex + 1; zerosCursor++) {
+      buffer[zerosCursor] = bytes1(uint8(48));
+    }
+    // add sigfigs
+    while (params.sigfigs > 0) {
+      if (params.decimalIndex > 0 && params.sigfigIndex == params.decimalIndex) {
+        buffer[params.sigfigIndex--] = '.';
+      }
+      buffer[params.sigfigIndex--] = bytes1(uint8(uint256(48) + (params.sigfigs % 10)));
+      params.sigfigs /= 10;
+    }
+    return string(buffer);
+  }
+
+  function _sigfigsRounded(uint256 value, uint8 digits) private pure returns (uint256, bool) {
+    bool extraDigit;
+    if (digits > 5) {
+      value = value / (10**(digits - 5));
+    }
+    bool roundUp = value % 10 > 4;
+    value = value / 10;
+    if (roundUp) {
+      value = value + 1;
+    }
+    // 99999 -> 100000 gives an extra sigfig
+    if (value == 100000) {
+      value /= 10;
+      extraDigit = true;
+    }
+    return (value, extraDigit);
+  }
+
+  function fixedPointToDecimalString(uint256 value, uint8 decimals) internal pure returns (string memory) {
+    bool priceBelow1 = value < 10**decimals;
+
+    // get digit count
+    uint256 temp = value;
+    uint8 digits;
+    while (temp != 0) {
+      digits++;
+      temp /= 10;
+    }
+    // don't count extra digit kept for rounding
+    digits = digits - 1;
+
+    // address rounding
+    (uint256 sigfigs, bool extraDigit) = _sigfigsRounded(value, digits);
+    if (extraDigit) {
+      digits++;
+    }
+
+    DecimalStringParams memory params;
+    if (priceBelow1) {
+      // 7 bytes ( "0." and 5 sigfigs) + leading 0's bytes
+      params.bufferLength = uint8(7 + 43 - digits);
+      params.zerosStartIndex = 2;
+      params.zerosEndIndex = uint8(43 + 1 - digits);
+      params.sigfigIndex = uint8(params.bufferLength - 1);
+    } else if (digits >= 9) {
+      // no decimal in price string
+      params.bufferLength = uint8(digits - 4);
+      params.zerosStartIndex = 5;
+      params.zerosEndIndex = uint8(params.bufferLength - 1);
+      params.sigfigIndex = 4;
+    } else {
+      // 5 sigfigs surround decimal
+      params.bufferLength = 6;
+      params.sigfigIndex = 5;
+      params.decimalIndex = uint8(digits + 1 - 5);
+    }
+    params.sigfigs = sigfigs;
+    params.isLessThanOne = priceBelow1;
+    params.isPercent = false;
+
+    return _generateDecimalString(params);
+  }
+
+  function addressToString(address _addr) internal view returns (string memory) {
+    bytes memory s = new bytes(40);
+    for (uint256 i = 0; i < 20; i++) {
+      bytes1 b = bytes1(uint8(uint256(uint160(_addr)) / (2**(8 * (19 - i)))));
+      bytes1 hi = bytes1(uint8(b) / 16);
+      bytes1 lo = bytes1(uint8(b) - 16 * uint8(hi));
+      s[2 * i] = _char(hi);
+      s[2 * i + 1] = _char(lo);
+    }
+    return string(s);
+  }
+
+  function _char(bytes1 b) private view returns (bytes1 c) {
+    if (uint8(b) < 10) return bytes1(uint8(b) + 0x30);
+    else return bytes1(uint8(b) + 0x57);
+  }
+
+  function _generateSVGImage(
+    ConstructTokenURIParams memory _params,
+    string memory _tokenASymbol,
+    string memory _tokenBSymbol
+  ) private pure returns (string memory svg) {
+    string memory _fromSymbol;
+    string memory _toSymbol;
+    uint8 _fromDecimals;
+    uint8 _toDecimals;
+    if (_params.fromA) {
+      _fromSymbol = _tokenASymbol;
+      _fromDecimals = _params.tokenADecimals;
+      _toSymbol = _tokenBSymbol;
+      _toDecimals = _params.tokenBDecimals;
+    } else {
+      _fromSymbol = _tokenBSymbol;
+      _fromDecimals = _params.tokenBDecimals;
+      _toSymbol = _tokenASymbol;
+      _toDecimals = _params.tokenADecimals;
+    }
+    NFTSVG.SVGParams memory _svgParams =
+      NFTSVG.SVGParams({
+        tokenId: _params.tokenId,
+        tokenA: addressToString(_params.tokenA),
+        tokenB: addressToString(_params.tokenB),
+        tokenASymbol: _tokenASymbol,
+        tokenBSymbol: _tokenBSymbol,
+        interval: _params.swapInterval.toString(),
+        swapsExecuted: _params.swapsExecuted,
+        swapsLeft: _params.swapsLeft,
+        swapped: string(abi.encodePacked(fixedPointToDecimalString(_params.swapped, _toDecimals), _toSymbol)),
+        averagePrice: string(abi.encodePacked(fixedPointToDecimalString(_params.swapped / _params.swapsExecuted, _toDecimals), _toSymbol)),
+        remaining: string(abi.encodePacked(fixedPointToDecimalString(_params.remaining, _fromDecimals), _fromSymbol)),
+        rate: string(abi.encodePacked(fixedPointToDecimalString(_params.rate, _fromDecimals), _fromSymbol))
+      });
+
+    return NFTSVG.generateSVG(_svgParams);
+  }
+}

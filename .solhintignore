@@ -1,2 +1,5 @@
 node_modules/
 contracts/mock
+
+// solhint crashes for this file
+contracts/libraries/NFTSVG.sol
