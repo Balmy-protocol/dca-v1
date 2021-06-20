@@ -97,7 +97,7 @@ library NFTDescriptor {
     uint32 _interval,
     uint256 _tokenId
   ) private pure returns (string memory) {
-    return
+    string memory _part1 =
       string(
         abi.encodePacked(
           'This NFT represents a liquidity position in a Mean Finance DCA ',
@@ -109,7 +109,12 @@ library NFTDescriptor {
           '\\nPair Address: ',
           _pairAddress,
           '\\n',
-          _tokenASymbol,
+          _tokenASymbol
+        )
+      );
+    string memory _part2 =
+      string(
+        abi.encodePacked(
           ' Address: ',
           _tokenAAddress,
           '\\n',
@@ -124,6 +129,7 @@ library NFTDescriptor {
           unicode'⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated.'
         )
       );
+    return string(abi.encodePacked(_part1, _part2));
   }
 
   function _generateName(ConstructTokenURIParams memory _params) private pure returns (string memory) {
