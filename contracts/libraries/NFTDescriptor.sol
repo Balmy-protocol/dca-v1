@@ -100,15 +100,15 @@ library NFTDescriptor {
     string memory _part1 = string(
       abi.encodePacked(
         'This NFT represents a position in a Mean Finance DCA ',
-        _tokenASymbol,
+        _escapeQuotes(_tokenASymbol),
         '-',
-        _tokenBSymbol,
+        _escapeQuotes(_tokenBSymbol),
         ' pair. ',
         'The owner of this NFT can modify or redeem the position.\\n',
         '\\nPair Address: ',
         _pairAddress,
         '\\n',
-        _tokenASymbol
+        _escapeQuotes(_tokenASymbol)
       )
     );
     string memory _part2 = string(
@@ -116,7 +116,7 @@ library NFTDescriptor {
         ' Address: ',
         _tokenAAddress,
         '\\n',
-        _tokenBSymbol,
+        _escapeQuotes(_tokenBSymbol),
         ' Address: ',
         _tokenBAddress,
         '\\nSwap interval: ',
@@ -131,7 +131,17 @@ library NFTDescriptor {
   }
 
   function _generateName(ConstructTokenURIParams memory _params) private pure returns (string memory) {
-    return string(abi.encodePacked('Mean Finance DCA - ', _params.swapInterval, ' - ', _params.tokenASymbol, '/', _params.tokenBSymbol));
+    return
+      string(
+        abi.encodePacked(
+          'Mean Finance DCA - ',
+          _params.swapInterval,
+          ' - ',
+          _escapeQuotes(_params.tokenASymbol),
+          '/',
+          _escapeQuotes(_params.tokenBSymbol)
+        )
+      );
   }
 
   struct DecimalStringParams {
@@ -266,22 +276,22 @@ library NFTDescriptor {
     uint8 _fromDecimals;
     uint8 _toDecimals;
     if (_params.fromA) {
-      _fromSymbol = _params.tokenASymbol;
+      _fromSymbol = _escapeQuotes(_params.tokenASymbol);
       _fromDecimals = _params.tokenADecimals;
-      _toSymbol = _params.tokenBSymbol;
+      _toSymbol = _escapeQuotes(_params.tokenBSymbol);
       _toDecimals = _params.tokenBDecimals;
     } else {
-      _fromSymbol = _params.tokenBSymbol;
+      _fromSymbol = _escapeQuotes(_params.tokenBSymbol);
       _fromDecimals = _params.tokenBDecimals;
-      _toSymbol = _params.tokenASymbol;
+      _toSymbol = _escapeQuotes(_params.tokenASymbol);
       _toDecimals = _params.tokenADecimals;
     }
     NFTSVG.SVGParams memory _svgParams = NFTSVG.SVGParams({
       tokenId: _params.tokenId,
       tokenA: addressToString(_params.tokenA),
       tokenB: addressToString(_params.tokenB),
-      tokenASymbol: _params.tokenASymbol,
-      tokenBSymbol: _params.tokenBSymbol,
+      tokenASymbol: _escapeQuotes(_params.tokenASymbol),
+      tokenBSymbol: _escapeQuotes(_params.tokenBSymbol),
       interval: _params.swapInterval,
       swapsExecuted: _params.swapsExecuted,
       swapsLeft: _params.swapsLeft,
