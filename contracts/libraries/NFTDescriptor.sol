@@ -32,16 +32,15 @@ library NFTDescriptor {
   function constructTokenURI(ConstructTokenURIParams memory _params) public pure returns (string memory) {
     string memory _name = _generateName(_params);
 
-    string memory _description =
-      _generateDescription(
-        _params.tokenASymbol,
-        _params.tokenBSymbol,
-        addressToString(_params.pair),
-        addressToString(_params.tokenA),
-        addressToString(_params.tokenB),
-        _params.swapInterval,
-        _params.tokenId
-      );
+    string memory _description = _generateDescription(
+      _params.tokenASymbol,
+      _params.tokenBSymbol,
+      addressToString(_params.pair),
+      addressToString(_params.tokenA),
+      addressToString(_params.tokenB),
+      _params.swapInterval,
+      _params.tokenId
+    );
     string memory image = Base64.encode(bytes(_generateSVGImage(_params)));
 
     return
@@ -97,38 +96,36 @@ library NFTDescriptor {
     string memory _interval,
     uint256 _tokenId
   ) private pure returns (string memory) {
-    string memory _part1 =
-      string(
-        abi.encodePacked(
-          'This NFT represents a liquidity position in a Mean Finance DCA ',
-          _tokenASymbol,
-          '-',
-          _tokenBSymbol,
-          ' pair. ',
-          'The owner of this NFT can modify or redeem the position.\\n',
-          '\\nPair Address: ',
-          _pairAddress,
-          '\\n',
-          _tokenASymbol
-        )
-      );
-    string memory _part2 =
-      string(
-        abi.encodePacked(
-          ' Address: ',
-          _tokenAAddress,
-          '\\n',
-          _tokenBSymbol,
-          ' Address: ',
-          _tokenBAddress,
-          '\\nSwap interval: ',
-          _interval,
-          '\\nToken ID: ',
-          _tokenId.toString(),
-          '\\n\\n',
-          unicode'⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated.'
-        )
-      );
+    string memory _part1 = string(
+      abi.encodePacked(
+        'This NFT represents a liquidity position in a Mean Finance DCA ',
+        _tokenASymbol,
+        '-',
+        _tokenBSymbol,
+        ' pair. ',
+        'The owner of this NFT can modify or redeem the position.\\n',
+        '\\nPair Address: ',
+        _pairAddress,
+        '\\n',
+        _tokenASymbol
+      )
+    );
+    string memory _part2 = string(
+      abi.encodePacked(
+        ' Address: ',
+        _tokenAAddress,
+        '\\n',
+        _tokenBSymbol,
+        ' Address: ',
+        _tokenBAddress,
+        '\\nSwap interval: ',
+        _interval,
+        '\\nToken ID: ',
+        _tokenId.toString(),
+        '\\n\\n',
+        unicode'⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated.'
+      )
+    );
     return string(abi.encodePacked(_part1, _part2));
   }
 
@@ -274,21 +271,20 @@ library NFTDescriptor {
       _toSymbol = _params.tokenASymbol;
       _toDecimals = _params.tokenADecimals;
     }
-    NFTSVG.SVGParams memory _svgParams =
-      NFTSVG.SVGParams({
-        tokenId: _params.tokenId,
-        tokenA: addressToString(_params.tokenA),
-        tokenB: addressToString(_params.tokenB),
-        tokenASymbol: _params.tokenASymbol,
-        tokenBSymbol: _params.tokenBSymbol,
-        interval: _params.swapInterval,
-        swapsExecuted: _params.swapsExecuted,
-        swapsLeft: _params.swapsLeft,
-        swapped: string(abi.encodePacked(fixedPointToDecimalString(_params.swapped, _toDecimals), _toSymbol)),
-        averagePrice: string(abi.encodePacked(fixedPointToDecimalString(_params.swapped / _params.swapsExecuted, _toDecimals), _toSymbol)),
-        remaining: string(abi.encodePacked(fixedPointToDecimalString(_params.remaining, _fromDecimals), _fromSymbol)),
-        rate: string(abi.encodePacked(fixedPointToDecimalString(_params.rate, _fromDecimals), _fromSymbol))
-      });
+    NFTSVG.SVGParams memory _svgParams = NFTSVG.SVGParams({
+      tokenId: _params.tokenId,
+      tokenA: addressToString(_params.tokenA),
+      tokenB: addressToString(_params.tokenB),
+      tokenASymbol: _params.tokenASymbol,
+      tokenBSymbol: _params.tokenBSymbol,
+      interval: _params.swapInterval,
+      swapsExecuted: _params.swapsExecuted,
+      swapsLeft: _params.swapsLeft,
+      swapped: string(abi.encodePacked(fixedPointToDecimalString(_params.swapped, _toDecimals), _toSymbol)),
+      averagePrice: string(abi.encodePacked(fixedPointToDecimalString(_params.swapped / _params.swapsExecuted, _toDecimals), _toSymbol)),
+      remaining: string(abi.encodePacked(fixedPointToDecimalString(_params.remaining, _fromDecimals), _fromSymbol)),
+      rate: string(abi.encodePacked(fixedPointToDecimalString(_params.rate, _fromDecimals), _fromSymbol))
+    });
 
     return NFTSVG.generateSVG(_svgParams);
   }
