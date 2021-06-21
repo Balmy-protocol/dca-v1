@@ -70,6 +70,10 @@ describe('NFTDescriptor', () => {
       it('rounded to 0', async () => {
         expect(await calculateString(39, BigNumber.from(10).pow(19), 18)).to.eq('0.000000000000000000');
       });
+
+      it('actual 0', async () => {
+        expect(await calculateString(0, 1, 18)).to.eq('0.0000');
+      });
     });
 
     describe('works with non 18 decimals', () => {

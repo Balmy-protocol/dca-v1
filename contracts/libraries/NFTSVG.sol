@@ -104,7 +104,7 @@ library NFTSVG {
   }
 
   function _generageSVGProgressArea(uint32 _swapsExecuted, uint32 _swapsLeft) private pure returns (string memory svg) {
-    uint256 _positionNow = 170 + ((314 + 170) / (_swapsExecuted + _swapsLeft)) * _swapsExecuted;
+    uint256 _positionNow = 170 + ((314 - 170) / (_swapsExecuted + _swapsLeft)) * _swapsExecuted;
     svg = string(
       abi.encodePacked(
         '<rect x="16" y="16" width="258" height="528" rx="26" ry="26" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />',
@@ -116,11 +116,11 @@ library NFTSVG {
         'px" r="5px" fill="white" />',
         '<circle cx="81px" cy="314px" r="4px" fill="#dddddd" /><text x="100px" y="174px" font-family="\'Courier New\', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,255,0.6)">Executed*: </tspan>',
         _swapsExecuted.toString(),
-        'swaps</text><text x="40px" y="',
+        ' swaps</text><text x="40px" y="',
         (_positionNow + 4).toString(),
         'px" font-family="\'Courier New\', monospace" font-size="12px" fill="white">Now</text><text x="100px" y="318px" font-family="\'Courier New\', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,255,0.6)">Left: </tspan>',
         _swapsLeft.toString(),
-        'swaps</text>'
+        ' swaps</text>'
       )
     );
   }

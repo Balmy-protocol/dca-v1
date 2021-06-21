@@ -10,47 +10,30 @@ import '../libraries/NFTDescriptor.sol';
 /// @title Describes NFT token positions
 /// @notice Produces a string containing the data URI for a JSON metadata string
 contract DCATokenDescriptor is IDCATokenDescriptor {
-  function tokenURI(IDCAPair _pair, uint256 _tokenId) external view override returns (string memory) {
-    IERC20Detailed _tokenA = _pair.tokenA();
-    IERC20Detailed _tokenB = _pair.tokenB();
-
-    (
-      IERC20Detailed _from,
-      ,
-      uint32 _swapInterval,
-      uint32 _swapsExecuted,
-      uint256 _swapped,
-      uint32 _swapsLeft,
-      uint256 _remaining,
-      uint192 _rate
-    ) = _pair.userPosition(_tokenId);
-
-    string memory _intervalDescription;
-    {
-      // Context used to avoid stack to deep errors
-
-      IDCAGlobalParameters _globalParameters = _pair.globalParameters();
-      _intervalDescription = _globalParameters.intervalDescription(_swapInterval);
-    }
+  function tokenURI(IDCAPairPositionHandler _positionHandler, uint256 _tokenId) external view override returns (string memory) {
+    IERC20Detailed _tokenA = _positionHandler.tokenA();
+    IERC20Detailed _tokenB = _positionHandler.tokenB();
+    IDCAGlobalParameters _globalParameters = _positionHandler.globalParameters();
+    IDCAPairPositionHandler.UserPosition memory _userPosition = _positionHandler.userPosition(_tokenId);
 
     return
       NFTDescriptor.constructTokenURI(
         NFTDescriptor.ConstructTokenURIParams({
           tokenId: _tokenId,
-          pair: address(_pair), // WTF
+          pair: address(_positionHandler),
           tokenA: address(_tokenA),
           tokenB: address(_tokenB),
           tokenADecimals: _tokenA.decimals(),
           tokenBDecimals: _tokenB.decimals(),
           tokenASymbol: _tokenA.symbol(),
           tokenBSymbol: _tokenB.symbol(),
-          swapInterval: _intervalDescription,
-          swapsExecuted: _swapsExecuted,
-          swapped: _swapped,
-          swapsLeft: _swapsLeft,
-          remaining: _remaining,
-          rate: _rate,
-          fromA: _from == _tokenA
+          swapInterval: _globalParameters.intervalDescription(_userPosition.swapInterval),
+          swapsExecuted: _userPosition.swapsExecuted,
+          swapped: _userPosition.swapped,
+          swapsLeft: _userPosition.swapsLeft,
+          remaining: _userPosition.remaining,
+          rate: _userPosition.rate,
+          fromA: _userPosition.from == _tokenA
         })
       );
   }

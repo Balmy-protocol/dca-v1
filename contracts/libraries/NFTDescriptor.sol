@@ -29,7 +29,7 @@ library NFTDescriptor {
     bool fromA;
   }
 
-  function constructTokenURI(ConstructTokenURIParams memory _params) public pure returns (string memory) {
+  function constructTokenURI(ConstructTokenURIParams memory _params) internal pure returns (string memory) {
     string memory _name = _generateName(_params);
 
     string memory _description = _generateDescription(
@@ -41,7 +41,8 @@ library NFTDescriptor {
       _params.swapInterval,
       _params.tokenId
     );
-    string memory image = Base64.encode(bytes(_generateSVGImage(_params)));
+
+    string memory _image = Base64.encode(bytes(_generateSVGImage(_params)));
 
     return
       string(
@@ -56,7 +57,7 @@ library NFTDescriptor {
                 _description,
                 '", "image": "',
                 'data:image/svg+xml;base64,',
-                image,
+                _image,
                 '"}'
               )
             )
@@ -98,7 +99,7 @@ library NFTDescriptor {
   ) private pure returns (string memory) {
     string memory _part1 = string(
       abi.encodePacked(
-        'This NFT represents a liquidity position in a Mean Finance DCA ',
+        'This NFT represents a position in a Mean Finance DCA ',
         _tokenASymbol,
         '-',
         _tokenBSymbol,
@@ -195,6 +196,10 @@ library NFTDescriptor {
   }
 
   function fixedPointToDecimalString(uint256 value, uint8 decimals) internal pure returns (string memory) {
+    if (value == 0) {
+      return '0.0000';
+    }
+
     bool priceBelow1 = value < 10**decimals;
 
     // get digit count
@@ -280,10 +285,16 @@ library NFTDescriptor {
       interval: _params.swapInterval,
       swapsExecuted: _params.swapsExecuted,
       swapsLeft: _params.swapsLeft,
-      swapped: string(abi.encodePacked(fixedPointToDecimalString(_params.swapped, _toDecimals), _toSymbol)),
-      averagePrice: string(abi.encodePacked(fixedPointToDecimalString(_params.swapped / _params.swapsExecuted, _toDecimals), _toSymbol)),
-      remaining: string(abi.encodePacked(fixedPointToDecimalString(_params.remaining, _fromDecimals), _fromSymbol)),
-      rate: string(abi.encodePacked(fixedPointToDecimalString(_params.rate, _fromDecimals), _fromSymbol))
+      swapped: string(abi.encodePacked(fixedPointToDecimalString(_params.swapped, _toDecimals), ' ', _toSymbol)),
+      averagePrice: string(
+        abi.encodePacked(
+          fixedPointToDecimalString(_params.swapsExecuted > 0 ? _params.swapped / _params.swapsExecuted : 0, _toDecimals),
+          ' ',
+          _toSymbol
+        )
+      ),
+      remaining: string(abi.encodePacked(fixedPointToDecimalString(_params.remaining, _fromDecimals), ' ', _fromSymbol)),
+      rate: string(abi.encodePacked(fixedPointToDecimalString(_params.rate, _fromDecimals), ' ', _fromSymbol))
     });
 
     return NFTSVG.generateSVG(_svgParams);
