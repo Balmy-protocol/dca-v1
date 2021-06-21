@@ -10,12 +10,6 @@ import '../libraries/NFTDescriptor.sol';
 /// @title Describes NFT token positions
 /// @notice Produces a string containing the data URI for a JSON metadata string
 contract DCATokenDescriptor is IDCATokenDescriptor {
-  IDCAGlobalParameters private immutable _globalParameters;
-
-  constructor(IDCAGlobalParameters __globalParameters) {
-    _globalParameters = __globalParameters;
-  }
-
   function tokenURI(IDCAPair _pair, uint256 _tokenId) external view override returns (string memory) {
     IERC20Detailed _tokenA = _pair.tokenA();
     IERC20Detailed _tokenB = _pair.tokenB();
@@ -31,18 +25,26 @@ contract DCATokenDescriptor is IDCATokenDescriptor {
       uint192 _rate
     ) = _pair.userPosition(_tokenId);
 
+    string memory _intervalDescription;
+    {
+      // Context used to avoid stack to deep errors
+
+      IDCAGlobalParameters _globalParameters = _pair.globalParameters();
+      _intervalDescription = _globalParameters.intervalDescription(_swapInterval);
+    }
+
     return
       NFTDescriptor.constructTokenURI(
         NFTDescriptor.ConstructTokenURIParams({
           tokenId: _tokenId,
-          pair: address(_pair),
+          pair: address(_pair), // WTF
           tokenA: address(_tokenA),
-          tokenB: address(_tokenA),
+          tokenB: address(_tokenB),
           tokenADecimals: _tokenA.decimals(),
           tokenBDecimals: _tokenB.decimals(),
           tokenASymbol: _tokenA.symbol(),
           tokenBSymbol: _tokenB.symbol(),
-          swapInterval: _swapInterval,
+          swapInterval: _intervalDescription,
           swapsExecuted: _swapsExecuted,
           swapped: _swapped,
           swapsLeft: _swapsLeft,

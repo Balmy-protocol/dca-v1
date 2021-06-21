@@ -19,7 +19,7 @@ library NFTDescriptor {
     uint8 tokenBDecimals;
     string tokenASymbol;
     string tokenBSymbol;
-    uint32 swapInterval;
+    string swapInterval;
     uint32 swapsExecuted;
     uint32 swapsLeft;
     uint256 tokenId;
@@ -94,7 +94,7 @@ library NFTDescriptor {
     string memory _pairAddress,
     string memory _tokenAAddress,
     string memory _tokenBAddress,
-    uint32 _interval,
+    string memory _interval,
     uint256 _tokenId
   ) private pure returns (string memory) {
     string memory _part1 =
@@ -122,7 +122,7 @@ library NFTDescriptor {
           ' Address: ',
           _tokenBAddress,
           '\\nSwap interval: ',
-          _interval.toString(),
+          _interval,
           '\\nToken ID: ',
           _tokenId.toString(),
           '\\n\\n',
@@ -133,8 +133,7 @@ library NFTDescriptor {
   }
 
   function _generateName(ConstructTokenURIParams memory _params) private pure returns (string memory) {
-    return
-      string(abi.encodePacked('Mean Finance DCA - ', _params.swapInterval.toString(), ' - ', _params.tokenASymbol, '/', _params.tokenBSymbol));
+    return string(abi.encodePacked('Mean Finance DCA - ', _params.swapInterval, ' - ', _params.tokenASymbol, '/', _params.tokenBSymbol));
   }
 
   struct DecimalStringParams {
@@ -152,15 +151,10 @@ library NFTDescriptor {
     uint8 zerosEndIndex;
     // true if decimal number is less than one
     bool isLessThanOne;
-    // true if string should include "%"
-    bool isPercent;
   }
 
   function _generateDecimalString(DecimalStringParams memory params) private pure returns (string memory) {
     bytes memory buffer = new bytes(params.bufferLength);
-    if (params.isPercent) {
-      buffer[buffer.length - 1] = '%';
-    }
     if (params.isLessThanOne) {
       buffer[0] = '0';
       buffer[1] = '.';
@@ -175,8 +169,12 @@ library NFTDescriptor {
       if (params.decimalIndex > 0 && params.sigfigIndex == params.decimalIndex) {
         buffer[params.sigfigIndex--] = '.';
       }
-      buffer[params.sigfigIndex--] = bytes1(uint8(uint256(48) + (params.sigfigs % 10)));
+      uint8 charIndex = uint8(48 + (params.sigfigs % 10));
+      buffer[params.sigfigIndex] = bytes1(charIndex);
       params.sigfigs /= 10;
+      if (params.sigfigs > 0) {
+        params.sigfigIndex--;
+      }
     }
     return string(buffer);
   }
@@ -221,13 +219,13 @@ library NFTDescriptor {
     DecimalStringParams memory params;
     if (priceBelow1) {
       // 7 bytes ( "0." and 5 sigfigs) + leading 0's bytes
-      params.bufferLength = uint8(7 + 43 - digits);
+      params.bufferLength = uint8(digits >= 5 ? decimals - digits + 6 : decimals + 2);
       params.zerosStartIndex = 2;
-      params.zerosEndIndex = uint8(43 + 1 - digits);
+      params.zerosEndIndex = uint8(decimals - digits + 1);
       params.sigfigIndex = uint8(params.bufferLength - 1);
-    } else if (digits >= 9) {
+    } else if (digits >= decimals + 4) {
       // no decimal in price string
-      params.bufferLength = uint8(digits - 4);
+      params.bufferLength = uint8(digits - decimals + 1);
       params.zerosStartIndex = 5;
       params.zerosEndIndex = uint8(params.bufferLength - 1);
       params.sigfigIndex = 4;
@@ -235,11 +233,10 @@ library NFTDescriptor {
       // 5 sigfigs surround decimal
       params.bufferLength = 6;
       params.sigfigIndex = 5;
-      params.decimalIndex = uint8(digits + 1 - 5);
+      params.decimalIndex = uint8(digits - decimals + 1);
     }
     params.sigfigs = sigfigs;
     params.isLessThanOne = priceBelow1;
-    params.isPercent = false;
 
     return _generateDecimalString(params);
   }
@@ -253,7 +250,7 @@ library NFTDescriptor {
       s[2 * i] = _char(hi);
       s[2 * i + 1] = _char(lo);
     }
-    return string(s);
+    return string(abi.encodePacked('0x', string(s)));
   }
 
   function _char(bytes1 b) private pure returns (bytes1 c) {
@@ -284,7 +281,7 @@ library NFTDescriptor {
         tokenB: addressToString(_params.tokenB),
         tokenASymbol: _params.tokenASymbol,
         tokenBSymbol: _params.tokenBSymbol,
-        interval: _params.swapInterval.toString(),
+        interval: _params.swapInterval,
         swapsExecuted: _params.swapsExecuted,
         swapsLeft: _params.swapsLeft,
         swapped: string(abi.encodePacked(fixedPointToDecimalString(_params.swapped, _toDecimals), _toSymbol)),
