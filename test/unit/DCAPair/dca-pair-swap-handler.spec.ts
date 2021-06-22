@@ -333,6 +333,7 @@ describe('DCAPairSwapHandler', () => {
 
   type NextSwapInfo = {
     swapsToPerform: Swap[];
+    amountOfSwaps: Swap[];
     amountToSwapTokenA: BigNumber;
     amountToSwapTokenB: BigNumber;
     ratePerUnitBToA: BigNumber;
@@ -467,7 +468,9 @@ describe('DCAPairSwapHandler', () => {
   });
 
   function doesSwapNeedToBeExecuted(nextSwapContext: NextSwapInformationContext): boolean {
-    return (nextSwapContext.lastSwapPerformedAt ?? 0) <= moment().unix() - nextSwapContext.interval;
+    return (
+      Math.floor((nextSwapContext.lastSwapPerformedAt ?? 0) / nextSwapContext.interval) < Math.floor(moment().unix() / nextSwapContext.interval)
+    );
   }
 
   function getNextSwapInfoTest({
@@ -497,15 +500,11 @@ describe('DCAPairSwapHandler', () => {
       given(async () => {
         if (context) await context();
         totalAmountToSwapOfTokenA = toBN(
-          nextSwapContext
-            .map((swapContext) => (doesSwapNeedToBeExecuted(swapContext) ? swapContext.amountToSwapOfTokenA : 0))
-            .reduce((a, b) => a + b, 0),
+          sumAmountFromContext(nextSwapContext, (swapContext) => swapContext.amountToSwapOfTokenA),
           tokenA
         );
         totalAmountToSwapOfTokenB = toBN(
-          nextSwapContext
-            .map((swapContext) => (doesSwapNeedToBeExecuted(swapContext) ? swapContext.amountToSwapOfTokenB : 0))
-            .reduce((a, b) => a + b, 0),
+          sumAmountFromContext(nextSwapContext, (swapContext) => swapContext.amountToSwapOfTokenB),
           tokenB
         );
         ratePerUnitBToA = toBN(ratePerUnitBToA, tokenA);
@@ -529,17 +528,13 @@ describe('DCAPairSwapHandler', () => {
         );
         nextSwapInfo = await DCAPairSwapHandler.getNextSwapInfo();
       });
-      // TODO: test amount of swaps
       then('swaps to perform are correct', () => {
-        const parsedNextSwaps = nextSwapContext.map((_) => [0, 0]);
-        let usedIdex = 0;
-        nextSwapContext.map((nextSwap) => {
-          if (doesSwapNeedToBeExecuted(nextSwap)) {
-            parsedNextSwaps[usedIdex] = [nextSwap.interval, nextSwap.nextSwapToPerform];
-            usedIdex++;
-          }
-        });
-        expect(nextSwapInfo.swapsToPerform).to.eql(parsedNextSwaps);
+        const parsedNextSwaps = nextSwapContext
+          .filter((nextSwap) => doesSwapNeedToBeExecuted(nextSwap))
+          .map(({ interval, nextSwapToPerform }) => [interval, nextSwapToPerform]);
+        const fill = new Array(nextSwapContext.length - parsedNextSwaps.length).fill([0, 0]);
+        expect(nextSwapInfo.swapsToPerform).to.eql(parsedNextSwaps.concat(fill));
+        expect(nextSwapInfo.amountOfSwaps).to.eql(parsedNextSwaps.length);
       });
       then('amount to swap of token A is correct', () => {
         expect(nextSwapInfo.amountToSwapTokenA).to.equal(totalAmountToSwapOfTokenA);
@@ -633,7 +628,7 @@ describe('DCAPairSwapHandler', () => {
 
   describe('getNextSwapInfo', () => {
     getNextSwapInfoTest({
-      title: 'there are two intervals and its not executable',
+      title: 'there are two intervals and they are not executable',
       context: () => DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL_2], ['Every 2 days']),
       nextSwapContext: [
         {
@@ -655,7 +650,7 @@ describe('DCAPairSwapHandler', () => {
     });
 
     getNextSwapInfoTest({
-      title: 'the only interval its executable, rate per unit is 1:1 and needing token b to be provided externally',
+      title: 'the only interval is executable, rate per unit is 1:1 and needing token b to be provided externally',
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -669,7 +664,7 @@ describe('DCAPairSwapHandler', () => {
     });
 
     getNextSwapInfoTest({
-      title: 'the only interval its executable, rate per unit is 1:1 and needing token a to be provided externally',
+      title: 'the only interval is executable, rate per unit is 1:1 and needing token a to be provided externally',
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -683,7 +678,7 @@ describe('DCAPairSwapHandler', () => {
     });
 
     getNextSwapInfoTest({
-      title: 'the only interval its executable, rate per unit is 1:1 and there is no need to provide tokens externally',
+      title: 'the only interval is executable, rate per unit is 1:1 and there is no need to provide tokens externally',
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -697,7 +692,7 @@ describe('DCAPairSwapHandler', () => {
     });
 
     getNextSwapInfoTest({
-      title: 'the only interval its executable, rate per unit is 3:5 and needing token b to be provided externally',
+      title: 'the only interval is executable, rate per unit is 3:5 and needing token b to be provided externally',
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -712,7 +707,7 @@ describe('DCAPairSwapHandler', () => {
     });
 
     getNextSwapInfoTest({
-      title: 'the only interval its executable, rate per unit is 3:5 and needing token a to be provided externally',
+      title: 'the only interval is executable, rate per unit is 3:5 and needing token a to be provided externally',
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -831,15 +826,11 @@ describe('DCAPairSwapHandler', () => {
         initialSwapperBalanceTokenA = toBN(initialSwapperBalanceTokenA, tokenA);
         initialSwapperBalanceTokenB = toBN(initialSwapperBalanceTokenB, tokenB);
         totalAmountToSwapOfTokenA = toBN(
-          nextSwapContext
-            .map((swapContext) => (doesSwapNeedToBeExecuted(swapContext) ? swapContext.amountToSwapOfTokenA : 0))
-            .reduce((a, b) => a + b, 0),
+          sumAmountFromContext(nextSwapContext, (swapContext) => swapContext.amountToSwapOfTokenA),
           tokenA
         );
         totalAmountToSwapOfTokenB = toBN(
-          nextSwapContext
-            .map((swapContext) => (doesSwapNeedToBeExecuted(swapContext) ? swapContext.amountToSwapOfTokenB : 0))
-            .reduce((a, b) => a + b, 0),
+          sumAmountFromContext(nextSwapContext, (swapContext) => swapContext.amountToSwapOfTokenB),
           tokenB
         );
         initialPairBalanceTokenA = initialPairBalanceTokenA !== undefined ? toBN(initialPairBalanceTokenA, tokenA) : totalAmountToSwapOfTokenA;
@@ -1149,12 +1140,6 @@ describe('DCAPairSwapHandler', () => {
         ],
         ratePerUnitBToA: 1,
       });
-      // await setNextSwapInfo({
-      //   nextSwapToPerform: 2,
-      //   amountToSwapOfTokenA: 2,
-      //   amountToSwapOfTokenB: 1,
-      //   ratePerUnitBToA: 1,
-      // });
       ({
         amountToBeProvidedBySwapper,
         amountToRewardSwapperWith,
@@ -1428,15 +1413,11 @@ describe('DCAPairSwapHandler', () => {
         initialContractTokenABalance = toBN(initialContractTokenABalance, tokenA);
         initialContractTokenBBalance = toBN(initialContractTokenBBalance, tokenB);
         totalAmountToSwapOfTokenA = toBN(
-          nextSwapContext
-            .map((swapContext) => (doesSwapNeedToBeExecuted(swapContext) ? swapContext.amountToSwapOfTokenA : 0))
-            .reduce((a, b) => a + b, 0),
+          sumAmountFromContext(nextSwapContext, (swapContext) => swapContext.amountToSwapOfTokenA),
           tokenA
         );
         totalAmountToSwapOfTokenB = toBN(
-          nextSwapContext
-            .map((swapContext) => (doesSwapNeedToBeExecuted(swapContext) ? swapContext.amountToSwapOfTokenB : 0))
-            .reduce((a, b) => a + b, 0),
+          sumAmountFromContext(nextSwapContext, (swapContext) => swapContext.amountToSwapOfTokenB),
           tokenB
         );
         ratePerUnitBToA = toBN(ratePerUnitBToA, tokenA);
@@ -1619,20 +1600,12 @@ describe('DCAPairSwapHandler', () => {
       });
       then('emits event with correct information', async () => {
         const nextSwapInformation = (await readArgFromEvent(swapTx, 'Swapped', '_nextSwapInformation')) as NextSwapInfo;
-        const parsedNextSwaps = nextSwapContext.map((_) => {
-          return { interval: 0, nextSwapToPerform: 0 };
-        });
-        let usedIdex = 0;
-        nextSwapContext.map((nextSwap) => {
-          if (doesSwapNeedToBeExecuted(nextSwap)) {
-            parsedNextSwaps[usedIdex] = { interval: nextSwap.interval, nextSwapToPerform: nextSwap.nextSwapToPerform };
-            usedIdex++;
-          }
-        });
+        const parsedNextSwaps = nextSwapContext.filter((nextSwap) => doesSwapNeedToBeExecuted(nextSwap));
         for (let i = 0; i < parsedNextSwaps.length; i++) {
           expect(nextSwapInformation.swapsToPerform[i].swapToPerform).to.equal(parsedNextSwaps[i].nextSwapToPerform);
           expect(nextSwapInformation.swapsToPerform[i].interval).to.equal(parsedNextSwaps[i].interval);
         }
+        expect(nextSwapInformation.amountOfSwaps).to.equal(parsedNextSwaps.length);
         bn.expectToEqualWithThreshold({
           value: nextSwapInformation.amountToSwapTokenA,
           to: totalAmountToSwapOfTokenA,
@@ -1762,6 +1735,13 @@ describe('DCAPairSwapHandler', () => {
       tokenToBeProvidedBySwapper,
       tokenToRewardSwapperWith,
     };
+  }
+
+  function sumAmountFromContext(nextSwapContext: NextSwapInformationContext[], transform: (context: NextSwapInformationContext) => number) {
+    return nextSwapContext
+      .filter((swapContext) => doesSwapNeedToBeExecuted(swapContext))
+      .map(transform)
+      .reduce((a, b) => a + b, 0);
   }
 
   function toBN(amount: BigNumber | string | number, token: TokenContract): BigNumber {
