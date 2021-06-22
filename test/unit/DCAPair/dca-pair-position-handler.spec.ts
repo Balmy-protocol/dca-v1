@@ -5,8 +5,8 @@ import { expect } from 'chai';
 import { TransactionResponse } from '@ethersproject/abstract-provider';
 import { readArgFromEventOrFail } from '../../utils/event-utils';
 import { when, then, given } from '../../utils/bdd';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 import { TokenContract } from '../../utils/erc20';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signers';
 
 // TODO: Test swap interval does not modify other intervals state
 describe('DCAPositionHandler', () => {
@@ -95,7 +95,7 @@ describe('DCAPositionHandler', () => {
           address: constants.NOT_ZERO_ADDRESS,
           rate: POSITION_RATE_5,
           swaps: POSITION_SWAPS_TO_PERFORM_10,
-          error: 'DCAPair: invalid deposit address',
+          error: 'InvalidToken',
         });
       });
     });
@@ -109,7 +109,7 @@ describe('DCAPositionHandler', () => {
           address: tokenA.address,
           rate: POSITION_RATE_5,
           swaps: POSITION_SWAPS_TO_PERFORM_10,
-          error: 'DCAPair: interval not allowed',
+          error: 'InvalidInterval',
         });
       });
     });
@@ -120,7 +120,7 @@ describe('DCAPositionHandler', () => {
           address: tokenA.address,
           rate: 0,
           swaps: POSITION_SWAPS_TO_PERFORM_10,
-          error: 'DCAPair: non-positive rate',
+          error: 'ZeroRate',
         });
       });
     });
@@ -131,7 +131,7 @@ describe('DCAPositionHandler', () => {
           address: tokenA.address,
           rate: POSITION_RATE_5,
           swaps: 0,
-          error: 'DCAPair: non-positive amount',
+          error: 'ZeroSwaps',
         });
       });
     });
@@ -173,8 +173,10 @@ describe('DCAPositionHandler', () => {
         await expectPositionToBe(dcaId, {
           from: tokenA,
           rate: POSITION_RATE_5,
-          lastWithdrawSwap: PERFORMED_SWAPS_10,
-          lastSwap: PERFORMED_SWAPS_10 + POSITION_SWAPS_TO_PERFORM_10,
+          swapsExecuted: 0,
+          swapsLeft: POSITION_SWAPS_TO_PERFORM_10,
+          swapped: 0,
+          remaining: POSITION_RATE_5 * POSITION_SWAPS_TO_PERFORM_10,
         });
       });
 
@@ -210,7 +212,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'withdrawSwapped',
           args: [100],
-          message: 'DCAPair: invalid position id',
+          message: 'InvalidPosition',
         });
       });
     });
@@ -243,8 +245,10 @@ describe('DCAPositionHandler', () => {
         await expectPositionToBe(dcaId, {
           from: tokenA,
           rate: POSITION_RATE_5,
-          lastWithdrawSwap: PERFORMED_SWAPS_10,
-          lastSwap: PERFORMED_SWAPS_10 + POSITION_SWAPS_TO_PERFORM_10,
+          swapsExecuted: 0,
+          swapsLeft: POSITION_SWAPS_TO_PERFORM_10,
+          swapped: 0,
+          remaining: POSITION_RATE_5 * POSITION_SWAPS_TO_PERFORM_10,
         });
       });
 
@@ -276,8 +280,10 @@ describe('DCAPositionHandler', () => {
         await expectPositionToBe(dcaId, {
           from: tokenA,
           rate: POSITION_RATE_5,
-          lastWithdrawSwap: PERFORMED_SWAPS_10 + 1,
-          lastSwap: PERFORMED_SWAPS_10 + POSITION_SWAPS_TO_PERFORM_10,
+          swapsExecuted: 0,
+          swapsLeft: POSITION_SWAPS_TO_PERFORM_10 - 1,
+          swapped: 0,
+          remaining: POSITION_RATE_5 * (POSITION_SWAPS_TO_PERFORM_10 - 1),
         });
       });
 
@@ -285,11 +291,6 @@ describe('DCAPositionHandler', () => {
         const swapped = tokenB.asUnits(RATE_PER_UNIT_5 * POSITION_RATE_5);
         const swappedWithFeeApplied = await withFeeApplied(swapped);
         await expect(response).to.emit(DCAPositionHandler, 'Withdrew').withArgs(owner.address, dcaId, tokenB.address, swappedWithFeeApplied);
-      });
-
-      then('calculateSwapped returns 0', async () => {
-        const swapped = await DCAPositionHandler.calculateSwapped(dcaId);
-        expect(swapped).to.equal(0);
       });
 
       thenInternalBalancesAreTheSameAsTokenBalances();
@@ -303,7 +304,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'withdrawSwappedMany',
           args: [[100]],
-          message: 'DCAPair: invalid position id',
+          message: 'InvalidPosition',
         });
       });
     });
@@ -343,14 +344,18 @@ describe('DCAPositionHandler', () => {
         await expectPositionToBe(dcaId1, {
           from: tokenA,
           rate: POSITION_RATE_5,
-          lastWithdrawSwap: PERFORMED_SWAPS_10,
-          lastSwap: PERFORMED_SWAPS_10 + POSITION_SWAPS_TO_PERFORM_10,
+          swapsExecuted: 0,
+          swapsLeft: POSITION_SWAPS_TO_PERFORM_10,
+          swapped: 0,
+          remaining: POSITION_RATE_5 * POSITION_SWAPS_TO_PERFORM_10,
         });
         await expectPositionToBe(dcaId2, {
           from: tokenB,
           rate: POSITION_RATE_5,
-          lastWithdrawSwap: PERFORMED_SWAPS_10,
-          lastSwap: PERFORMED_SWAPS_10 + POSITION_SWAPS_TO_PERFORM_10,
+          swapsExecuted: 0,
+          swapsLeft: POSITION_SWAPS_TO_PERFORM_10,
+          swapped: 0,
+          remaining: POSITION_RATE_5 * POSITION_SWAPS_TO_PERFORM_10,
         });
       });
 
@@ -420,22 +425,19 @@ describe('DCAPositionHandler', () => {
         await expectPositionToBe(dcaId1, {
           from: tokenA,
           rate: POSITION_RATE_5,
-          lastWithdrawSwap: PERFORMED_SWAPS_10 + 1,
-          lastSwap: PERFORMED_SWAPS_10 + POSITION_SWAPS_TO_PERFORM_10,
+          swapsExecuted: 0,
+          swapsLeft: POSITION_SWAPS_TO_PERFORM_10 - 1,
+          swapped: 0,
+          remaining: POSITION_RATE_5 * (POSITION_SWAPS_TO_PERFORM_10 - 1),
         });
         await expectPositionToBe(dcaId2, {
           from: tokenB,
           rate: POSITION_RATE_3,
-          lastWithdrawSwap: PERFORMED_SWAPS_10 + 1,
-          lastSwap: PERFORMED_SWAPS_10 + POSITION_SWAPS_TO_PERFORM_10,
+          swapsExecuted: 0,
+          swapsLeft: POSITION_SWAPS_TO_PERFORM_10 - 1,
+          swapped: 0,
+          remaining: POSITION_RATE_3 * (POSITION_SWAPS_TO_PERFORM_10 - 1),
         });
-      });
-
-      then('calculateSwapped returns 0', async () => {
-        const swapped1 = await DCAPositionHandler.calculateSwapped(dcaId1);
-        const swapped2 = await DCAPositionHandler.calculateSwapped(dcaId2);
-        expect(swapped1).to.equal(0);
-        expect(swapped2).to.equal(0);
       });
 
       then('event is emitted', async () => {
@@ -457,7 +459,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'terminate',
           args: [100],
-          message: 'DCAPair: invalid position id',
+          message: 'InvalidPosition',
         });
       });
     });
@@ -507,8 +509,11 @@ describe('DCAPositionHandler', () => {
         await expectPositionToBe(dcaId, {
           from: constants.ZERO_ADDRESS,
           rate: 0,
-          lastWithdrawSwap: 0,
-          lastSwap: 0,
+          swapsExecuted: 0,
+          swapsLeft: 0,
+          swapped: 0,
+          remaining: 0,
+          swapInterval: 0,
         });
       });
 
@@ -528,7 +533,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifyRateAndSwaps',
           args: [100, POSITION_RATE_5, POSITION_SWAPS_TO_PERFORM_10],
-          message: 'DCAPair: invalid position id',
+          message: 'InvalidPosition',
         });
       });
     });
@@ -541,7 +546,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifyRateAndSwaps',
           args: [dcaId, 0, POSITION_SWAPS_TO_PERFORM_10],
-          message: 'DCAPair: non-positive rate',
+          message: 'ZeroRate',
         });
       });
     });
@@ -554,7 +559,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifyRateAndSwaps',
           args: [dcaId, POSITION_RATE_5, 0],
-          message: 'DCAPair: non-positive amount',
+          message: 'ZeroSwaps',
         });
       });
     });
@@ -593,7 +598,7 @@ describe('DCAPositionHandler', () => {
           amount: POSITION_RATE_7,
         });
 
-        const swapped = await DCAPositionHandler.calculateSwapped(dcaId);
+        const swapped = await calculateSwapped(dcaId);
         const amountSwapped = RATE_PER_UNIT_5 * (POSITION_RATE_5 + POSITION_RATE_6 + POSITION_RATE_7);
         const expected = await withFeeApplied(tokenB.asUnits(amountSwapped));
         expect(swapped).to.equal(expected);
@@ -637,7 +642,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifySwaps',
           args: [100, POSITION_SWAPS_TO_PERFORM_10],
-          message: 'DCAPair: invalid position id',
+          message: 'InvalidPosition',
         });
       });
     });
@@ -650,7 +655,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifySwaps',
           args: [dcaId, 0],
-          message: 'DCAPair: non-positive amount',
+          message: 'ZeroSwaps',
         });
       });
     });
@@ -692,7 +697,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'addFundsToPosition',
           args: [100, tokenA.asUnits(EXTRA_AMOUNT_TO_ADD_1), POSITION_SWAPS_TO_PERFORM_10],
-          message: 'DCAPair: invalid position id',
+          message: 'InvalidPosition',
         });
       });
     });
@@ -705,7 +710,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'addFundsToPosition',
           args: [dcaId, 0, POSITION_SWAPS_TO_PERFORM_10],
-          message: 'DCAPair: non-positive amount',
+          message: 'ZeroAmount',
         });
       });
     });
@@ -729,7 +734,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifyRate',
           args: [100, POSITION_RATE_5],
-          message: 'DCAPair: invalid position id',
+          message: 'InvalidPosition',
         });
       });
     });
@@ -742,7 +747,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifyRate',
           args: [dcaId, 0],
-          message: 'DCAPair: non-positive rate',
+          message: 'ZeroRate',
         });
       });
     });
@@ -790,7 +795,7 @@ describe('DCAPositionHandler', () => {
           contract: DCAPositionHandler,
           func: 'modifyRate',
           args: [dcaId, POSITION_RATE_5 + 1],
-          message: 'DCAPair: position completed',
+          message: 'PositionCompleted',
         });
       });
     });
@@ -807,7 +812,6 @@ describe('DCAPositionHandler', () => {
         await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, PERFORMED_SWAPS_10 + 1);
         await setRatePerUnit({
           accumRate: MAX.add(1),
-          rateMultiplier: 0,
           onSwap: PERFORMED_SWAPS_10 + 1,
         });
 
@@ -817,7 +821,7 @@ describe('DCAPositionHandler', () => {
       then('tx is reverted', async () => {
         await behaviours.checkTxRevertedWithMessage({
           tx,
-          message: 'DCAPair: must withdraw before',
+          message: 'MandatoryWithdraw',
         });
       });
     });
@@ -830,7 +834,6 @@ describe('DCAPositionHandler', () => {
         await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, PERFORMED_SWAPS_10 + 1);
         await setRatePerUnit({
           accumRate: MAX,
-          rateMultiplier: 0,
           onSwap: PERFORMED_SWAPS_10 + 1,
         });
 
@@ -838,24 +841,13 @@ describe('DCAPositionHandler', () => {
       });
 
       then('position is modified correctly', async () => {
-        const { swappedBeforeModified } = await DCAPositionHandler.userPosition(dcaId);
+        const { swappedBeforeModified } = await DCAPositionHandler.internalPosition(dcaId);
         expect(swappedBeforeModified).to.equal(MAX);
       });
     });
   });
 
   describe('calculateSwapped', () => {
-    when('multiplier is 1 and accum is negative', () => {
-      then('swapped is calculated correctly', async () => {
-        const swapped = await calculateSwappedWith({
-          accumRate: -10,
-          rateMultiplier: 1,
-          fee: 0,
-        });
-        expect(swapped).to.equal(constants.MAX_UINT_256.sub(tokenB.asUnits(10)));
-      });
-    });
-
     when('last swap ended before calculation', () => {
       then('swapped is calculated correctly', async () => {
         const { dcaId } = await deposit(tokenA, 1, 1);
@@ -863,88 +855,43 @@ describe('DCAPositionHandler', () => {
         // Turn fees to zero
         await DCAGlobalParameters.setSwapFee(0);
 
-        // Set up max(uint256) in PERFORMED_SWAPS_10 + 1
+        // Set a value in PERFORMED_SWAPS_10 + 1
         await setRatePerUnit({
-          accumRate: 0,
-          rateMultiplier: 1,
+          accumRate: 1000000,
           onSwap: PERFORMED_SWAPS_10 + 1,
         });
 
-        // Set up overflow in PERFORMED_SWAPS_10 + 2
+        // Set another value in PERFORMED_SWAPS_10 + 2
         await setRatePerUnit({
-          accumRate: 1,
-          rateMultiplier: 1,
+          accumRate: 1000001,
           onSwap: PERFORMED_SWAPS_10 + 2,
         });
 
         await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, PERFORMED_SWAPS_10 + 3);
 
         // It shouldn't revert, since the position ended before the overflow
-        const swapped = await DCAPositionHandler.calculateSwapped(dcaId);
-        expect(swapped).to.equal(constants.MAX_UINT_256);
+        const swapped = await calculateSwapped(dcaId);
+        expect(swapped).to.equal(tokenB.asUnits(1000000));
       });
     });
 
     describe('verify overflow errors', () => {
-      when('multiplier is 1 and accum is positive', () => {
+      when('accum is MAX(uint256) and position rate is more than 1', () => {
         then('there is an overflow', async () => {
           await expectCalculationToFailWithOverflow({
-            accumRate: 1,
-            rateMultiplier: 1,
-            fee: 0,
-          });
-        });
-      });
-
-      when('multiplier is 2 and accum is not -MAX(uint256)', () => {
-        then('there is an overflow', async () => {
-          await expectCalculationToFailWithOverflow({
-            accumRate: constants.MAX_UINT_256.mul(-1).add(1),
-            rateMultiplier: 2,
-            fee: 0,
-          });
-        });
-      });
-
-      when('multiplier is 3', () => {
-        then('there is an overflow', async () => {
-          await expectCalculationToFailWithOverflow({
-            accumRate: constants.MAX_UINT_256.mul(-1),
-            rateMultiplier: 3,
-            fee: 0,
+            accumRate: constants.MAX_UINT_256,
+            positionRate: 2,
           });
         });
       });
     });
 
     describe('verify overflow limits', () => {
-      when('multiplier is 1 and accum is 0', () => {
-        then('swapped should be max uint', async () => {
-          const _swapped = await calculateSwappedWith({
-            accumRate: 0,
-            rateMultiplier: 1,
-            fee: 0,
-          });
-          expect(_swapped).to.equal(constants.MAX_UINT_256);
-        });
-      });
-
-      when('multiplier is 0 and accum is MAX(uint256)', () => {
+      when('accum is MAX(uint256) and position rate is 1', () => {
         then('swapped should be max uint', async () => {
           const swapped = await calculateSwappedWith({
             accumRate: constants.MAX_UINT_256,
-            rateMultiplier: 0,
-            fee: 0,
-          });
-          expect(swapped).to.equal(constants.MAX_UINT_256);
-        });
-      });
-
-      when('multiplier is 2 and accum is -MAX(uint256)', () => {
-        then('swapped should be max uint', async () => {
-          const swapped = await calculateSwappedWith({
-            accumRate: constants.MAX_UINT_256.mul(-1),
-            rateMultiplier: 2,
+            positionRate: 1,
             fee: 0,
           });
           expect(swapped).to.equal(constants.MAX_UINT_256);
@@ -958,7 +905,6 @@ describe('DCAPositionHandler', () => {
             const protocolFee = feePrecision - 1;
             const swapped = await calculateSwappedWith({
               accumRate: constants.MAX_UINT_256,
-              rateMultiplier: 0,
               fee: protocolFee,
             });
             const fee = constants.MAX_UINT_256.div(feePrecision).mul(protocolFee).div(100);
@@ -972,7 +918,6 @@ describe('DCAPositionHandler', () => {
             const protocolFee = feePrecision + 1;
             const swapped = await calculateSwappedWith({
               accumRate: constants.MAX_UINT_256,
-              rateMultiplier: 0,
               fee: protocolFee,
             });
             const fee = constants.MAX_UINT_256.div(feePrecision).div(100).mul(protocolFee);
@@ -984,76 +929,46 @@ describe('DCAPositionHandler', () => {
 
     async function calculateSwappedWith({
       accumRate,
-      rateMultiplier,
+      positionRate,
       fee,
     }: {
       accumRate: number | BigNumber;
-      rateMultiplier: number;
+      positionRate?: number;
       fee?: number | BigNumber;
     }) {
-      const { dcaId } = await deposit(tokenA, 1, 1);
+      const { dcaId } = await deposit(tokenA, positionRate ?? 1, 1);
       if (fee !== undefined) await DCAGlobalParameters.setSwapFee(fee);
       await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, PERFORMED_SWAPS_10 + 1);
-      if (accumRate < 0) {
-        await setRatePerUnit({
-          accumRate: BigNumber.isBigNumber(accumRate) ? accumRate.abs() : tokenB.asUnits(Math.abs(accumRate)),
-          rateMultiplier: 0,
-          onSwap: PERFORMED_SWAPS_10,
-        });
-        await setRatePerUnit({
-          accumRate: 0,
-          rateMultiplier,
-          onSwap: PERFORMED_SWAPS_10 + 1,
-        });
-      } else {
-        await setRatePerUnit({
-          accumRate,
-          rateMultiplier,
-          onSwap: PERFORMED_SWAPS_10 + 1,
-        });
-      }
+      await setRatePerUnit({
+        accumRate,
+        onSwap: PERFORMED_SWAPS_10 + 1,
+      });
 
-      return DCAPositionHandler.calculateSwapped(dcaId);
+      return calculateSwapped(dcaId);
     }
 
-    function expectCalculationToFailWithOverflow({
-      accumRate,
-      rateMultiplier,
-      fee,
-    }: {
-      accumRate: number | BigNumber;
-      rateMultiplier: number;
-      fee?: number | BigNumber;
-    }) {
-      const tx = calculateSwappedWith({
+    async function expectCalculationToFailWithOverflow({ accumRate, positionRate }: { accumRate: number | BigNumber; positionRate: number }) {
+      const { dcaId } = await deposit(tokenA, positionRate ?? 1, 1);
+      await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, PERFORMED_SWAPS_10 + 1);
+      await setRatePerUnit({
         accumRate,
-        rateMultiplier,
-        fee,
+        onSwap: PERFORMED_SWAPS_10 + 1,
       });
+      const tx = DCAPositionHandler.userPosition(dcaId);
 
       return behaviours.checkTxRevertedWithMessage({
         tx,
-        message: new RegExp("\\b(overflow|Transaction reverted and Hardhat couldn't infer the reason)\\b"),
+        message: 'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)',
       });
-      // TODO: Remove hack above when Hardhat detects native overflows correctly
     }
   });
 
-  async function setRatePerUnit({
-    accumRate,
-    rateMultiplier,
-    onSwap,
-  }: {
-    accumRate: number | BigNumber;
-    rateMultiplier: number;
-    onSwap: number;
-  }) {
+  async function setRatePerUnit({ accumRate, onSwap }: { accumRate: number | BigNumber; onSwap: number }) {
     await DCAPositionHandler.setRatePerUnit(
       SWAP_INTERVAL,
       tokenA.address,
       onSwap,
-      BigNumber.isBigNumber(accumRate) ? accumRate : tokenB.asUnits(accumRate),
-      rateMultiplier
+      BigNumber.isBigNumber(accumRate) ? accumRate : tokenB.asUnits(accumRate)
     );
   }
 
@@ -1100,7 +1015,7 @@ describe('DCAPositionHandler', () => {
 
       then('operation is reverted', async () => {
         const result: Promise<TransactionResponse> = execute({ token: tokenA, contract: DCAPositionHandler.connect(stranger), dcaId });
-        await expect(result).to.be.revertedWith('DCAPair: caller not allowed');
+        await expect(result).to.be.revertedWith('UnauthorizedCaller');
       });
     });
   }
@@ -1168,15 +1083,11 @@ describe('DCAPositionHandler', () => {
         await expectPositionToBe(dcaId, {
           from: tokenA,
           rate: newRate!,
-          lastWithdrawSwap: PERFORMED_SWAPS_10 + 1,
-          lastSwap: PERFORMED_SWAPS_10 + newSwaps! + 1,
+          swapsExecuted: 0,
+          swapsLeft: newSwaps!,
+          swapped: initialRate * RATE_PER_UNIT_5,
+          remaining: newRate! * newSwaps!,
         });
-      });
-
-      then(`swapped amount isn't modified`, async () => {
-        const swapped = await DCAPositionHandler.calculateSwapped(dcaId);
-        const expected = await withFeeApplied(tokenB.asUnits(initialRate * RATE_PER_UNIT_5)); // Only one swap was executed
-        expect(swapped).to.equal(expected);
       });
 
       thenInternalBalancesAreTheSameAsTokenBalances();
@@ -1197,7 +1108,7 @@ describe('DCAPositionHandler', () => {
     const fromTokenReal = fromToken ?? tokenA;
     const toToken = fromTokenReal === tokenA ? tokenB : tokenA;
     await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, swap);
-    await DCAPositionHandler.setRatePerUnit(SWAP_INTERVAL, fromTokenReal.address, swap, toToken.asUnits(ratePerUnit), 0);
+    await DCAPositionHandler.setRatePerUnit(SWAP_INTERVAL, fromTokenReal.address, swap, toToken.asUnits(ratePerUnit));
     await fromTokenReal.burn(DCAPositionHandler.address, fromTokenReal.asUnits(amount));
     await toToken.mint(DCAPositionHandler.address, await withFeeApplied(toToken.asUnits(amount * ratePerUnit))); // We calculate and subtract the fee, similarly to how it would be when not unit tested
     await DCAPositionHandler.setInternalBalances(
@@ -1234,6 +1145,11 @@ describe('DCAPositionHandler', () => {
     return DCAPositionHandler.terminate(dcaId);
   }
 
+  async function calculateSwapped(dcaId: BigNumber): Promise<BigNumber> {
+    const { swapped } = await DCAPositionHandler.userPosition(dcaId);
+    return swapped;
+  }
+
   async function deposit(token: TokenContract, rate: number, swaps: number) {
     const response: TransactionResponse = await DCAPositionHandler.deposit(token.address, token.asUnits(rate), swaps, SWAP_INTERVAL);
     const dcaId = await readArgFromEventOrFail<BigNumber>(response, 'Deposited', '_dcaId');
@@ -1264,26 +1180,52 @@ describe('DCAPositionHandler', () => {
     {
       from,
       rate,
-      lastSwap,
-      lastWithdrawSwap,
+      swapped,
+      swapsLeft,
+      remaining,
+      swapsExecuted,
+      swapInterval,
     }: {
       from: Contract | string;
       rate: number;
-      lastSwap: number;
-      lastWithdrawSwap: number;
+      swapsLeft: number;
+      swapped: number;
+      swapsExecuted: number;
+      remaining: number;
+      swapInterval?: number;
     }
   ) {
     const {
-      fromTokenA,
+      from: positionFrom,
+      to: positionTo,
+      swapInterval: positionSwapInterval,
+      swapsExecuted: positionSwapsExecuted,
+      swapped: positionSwapped,
+      swapsLeft: positionSwapsLeft,
+      remaining: positionRemaining,
       rate: positionRate,
-      lastWithdrawSwap: positionLastWithdrawSwap,
-      lastSwap: positionLastSwap,
+    }: {
+      from: string;
+      to: string;
+      swapInterval: number;
+      swapsExecuted: number;
+      swapped: BigNumber;
+      swapsLeft: number;
+      remaining: number;
+      rate: BigNumber;
     } = await DCAPositionHandler.userPosition(dcaId);
     const fromAddress = typeof from === 'string' ? from : from.address;
-    expect(fromTokenA, 'Wrong from address in position').to.equal(tokenA.address === fromAddress);
-    expect(positionRate, 'Wrong rate').to.equal(fromTokenA ? tokenA.asUnits(rate) : tokenB.asUnits(rate));
-    expect(positionLastWithdrawSwap, 'Wrong last withdraw swap').to.equal(lastWithdrawSwap);
-    expect(positionLastSwap, 'Wrong last swap').to.equal(lastSwap);
+    const fromToken = fromAddress === tokenA.address ? tokenA : tokenB;
+    const toToken = fromAddress === tokenA.address ? tokenB : tokenA;
+
+    expect(positionFrom, 'Wrong from address in position').to.equal(fromToken.address);
+    expect(positionTo, 'Wrong to address in position').to.equal(toToken.address);
+    expect(positionSwapInterval, 'Wrong swap interval in position').to.equal(swapInterval ?? SWAP_INTERVAL);
+    expect(positionSwapsExecuted, 'Wrong swaps executed in position').to.equal(swapsExecuted);
+    expect(positionSwapped, 'Wrong swapped amount in position').to.equal(await withFeeApplied(toToken.asUnits(swapped)));
+    expect(positionSwapsLeft, 'Wrong swaps left in position').to.equal(swapsLeft);
+    expect(positionRemaining, 'Wrong remaining amount in position').to.equal(fromToken.asUnits(remaining));
+    expect(positionRate, 'Wrong rate in position').to.equal(fromAddress === tokenA.address ? tokenA.asUnits(rate) : tokenB.asUnits(rate));
   }
 
   async function getFeeFrom(value: BigNumberish): Promise<BigNumber> {
