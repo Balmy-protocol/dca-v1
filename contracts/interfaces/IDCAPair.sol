@@ -95,8 +95,11 @@ interface IDCAPairSwapHandler {
     uint32 interval;
     uint32 swapToPerform;
   }
+
+  // TODO: see if we can optimize this in terms of space
   struct NextSwapInformation {
     Swap[] swapsToPerform;
+    uint8 amountOfSwaps;
     uint256 amountToSwapTokenA;
     uint256 amountToSwapTokenB;
     uint256 availableToBorrowTokenA;

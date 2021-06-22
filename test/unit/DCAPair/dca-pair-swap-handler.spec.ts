@@ -339,42 +339,15 @@ describe('DCAPairSwapHandler', () => {
     tokenToRewardSwapperWith: string;
   };
 
-  async function getNextSwapsToPerformTest({
-    title,
-    context,
-    swapsContext,
-    swapsToPerform,
-  }: {
-    title: string;
-    context: () => Promise<void>;
-    swapsContext: [
-      {
-        interval: BigNumber;
-        lastSwapPerformed: BigNumber;
-      }
-    ];
-    swapsToPerform: Swap[];
-  }): Promise<void> {
-    given(async () => {
-      await context();
-      for (let i = 0; i < swapsContext.length; i++) {
-        await DCAPairSwapHandler.setLastSwapPerformed(swapsContext[i].interval, swapsContext[i].lastSwapPerformed);
-      }
-    });
-    when(title, () => {
-      then('returns correct intervals', async () => {
-        expect(await DCAPairSwapHandler.getNextSwapsToPerform()).to.eql(swapsToPerform);
-      });
-    });
-  }
-
   describe('getNextSwapsToPerform', () => {
     when('no allowed swap interval', () => {
       given(async () => {
         await DCAGlobalParameters.removeSwapIntervalsFromAllowedList([SWAP_INTERVAL]);
       });
       then('returns empty array', async () => {
-        expect(await DCAPairSwapHandler.getNextSwapsToPerform()).to.be.empty;
+        const { swaps, amount } = await getSwapsToPerform();
+        expect(swaps).to.be.empty;
+        expect(amount).to.equal(0);
       });
     });
     when('only one allowed swap interval', () => {
@@ -383,7 +356,9 @@ describe('DCAPairSwapHandler', () => {
           await DCAPairSwapHandler.setLastSwapPerformed(SWAP_INTERVAL, moment().unix());
         });
         then('returns zero-ed', async () => {
-          expect(await DCAPairSwapHandler.getNextSwapsToPerform()).to.be.eql([[0, 0]]);
+          const { swaps, amount } = await getSwapsToPerform();
+          expect(swaps).to.be.eql([{ interval: 0, nextSwap: 0 }]);
+          expect(amount).to.be.eql(0);
         });
       });
       when('and its executable', () => {
@@ -398,7 +373,9 @@ describe('DCAPairSwapHandler', () => {
           await DCAPairSwapHandler.setPerformedSwaps(SWAP_INTERVAL, 12456);
         });
         then('returns correct next swaps to perform info', async () => {
-          expect(await DCAPairSwapHandler.getNextSwapsToPerform()).to.eql([[SWAP_INTERVAL, nextSwapToPerform + 1]]);
+          const { swaps, amount } = await getSwapsToPerform();
+          expect(swaps).to.be.eql([{ interval: SWAP_INTERVAL, nextSwap: nextSwapToPerform + 1 }]);
+          expect(amount).to.be.eql(1);
         });
       });
     });
@@ -413,10 +390,12 @@ describe('DCAPairSwapHandler', () => {
           await DCAPairSwapHandler.setLastSwapPerformed(SWAP_INTERVAL_2, moment().unix());
         });
         then('returns zero-ed array', async () => {
-          expect(await DCAPairSwapHandler.getNextSwapsToPerform()).to.be.eql([
-            [0, 0],
-            [0, 0],
+          const { swaps, amount } = await getSwapsToPerform();
+          expect(swaps).to.be.eql([
+            { interval: 0, nextSwap: 0 },
+            { interval: 0, nextSwap: 0 },
           ]);
+          expect(amount).to.be.eql(0);
         });
       });
       when('one is executable', () => {
@@ -432,10 +411,12 @@ describe('DCAPairSwapHandler', () => {
           await DCAPairSwapHandler.setPerformedSwaps(SWAP_INTERVAL_2, nextSwapToPerform);
         });
         then('returns correct next swaps to perform info', async () => {
-          expect(await DCAPairSwapHandler.getNextSwapsToPerform()).to.eql([
-            [0, 0],
-            [SWAP_INTERVAL_2, nextSwapToPerform + 1],
+          const { swaps, amount } = await getSwapsToPerform();
+          expect(swaps).to.be.eql([
+            { interval: SWAP_INTERVAL_2, nextSwap: nextSwapToPerform + 1 },
+            { interval: 0, nextSwap: 0 },
           ]);
+          expect(amount).to.be.eql(1);
         });
       });
       when('both are executable', () => {
@@ -458,13 +439,23 @@ describe('DCAPairSwapHandler', () => {
           await DCAPairSwapHandler.setPerformedSwaps(SWAP_INTERVAL_2, nextSwapInterval2ToPerform);
         });
         then('returns correct next swaps to perform info', async () => {
-          expect(await DCAPairSwapHandler.getNextSwapsToPerform()).to.eql([
-            [SWAP_INTERVAL, nextSwapInterval1ToPerform + 1],
-            [SWAP_INTERVAL_2, nextSwapInterval2ToPerform + 1],
+          const { swaps, amount } = await getSwapsToPerform();
+          expect(swaps).to.be.eql([
+            { interval: SWAP_INTERVAL, nextSwap: nextSwapInterval1ToPerform + 1 },
+            { interval: SWAP_INTERVAL_2, nextSwap: nextSwapInterval2ToPerform + 1 },
           ]);
+          expect(amount).to.be.eql(2);
         });
       });
     });
+
+    async function getSwapsToPerform(): Promise<{ swaps: { interval: number; nextSwap: number }[]; amount: number }> {
+      const [swaps, amount] = await DCAPairSwapHandler.getNextSwapsToPerform();
+      return {
+        swaps: swaps.map(([interval, nextSwap]: [number, number]) => ({ interval, nextSwap })),
+        amount,
+      };
+    }
   });
 
   function getNextSwapInfoTest({
@@ -514,6 +505,7 @@ describe('DCAPairSwapHandler', () => {
         await DCAPairSwapHandler.setInternalBalances((amountToSwapOfTokenA as BigNumber).mul(2), (amountToSwapOfTokenB as BigNumber).mul(2));
         nextSwapInfo = await DCAPairSwapHandler.getNextSwapInfo();
       });
+      // TODO: test amount of swaps
       then('swap to perform is current + 1', () => {
         expect(nextSwapInfo.swapsToPerform[0].swapToPerform).to.equal(nextSwapToPerform);
       });
