@@ -151,12 +151,11 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
     }
   }
 
-  function swap(uint32 _swapInterval) public override {
-    swap(_swapInterval, 0, 0, msg.sender, '');
+  function swap() public override {
+    swap(0, 0, msg.sender, '');
   }
 
   function swap(
-    uint32 _swapInterval,
     uint256 _amountToBorrowTokenA,
     uint256 _amountToBorrowTokenB,
     address _to,
@@ -165,7 +164,7 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
     IDCAGlobalParameters.SwapParameters memory _swapParameters = globalParameters.swapParameters();
     require(!_swapParameters.isPaused, 'DCAPair: swaps are paused');
     NextSwapInformation memory _nextSwapInformation = _getNextSwapInfo(_swapParameters.swapFee);
-    _swapInterval = _nextSwapInformation.swapsToPerform[0].interval;
+    uint32 _swapInterval = _nextSwapInformation.swapsToPerform[0].interval;
     _registerSwap(
       _swapInterval,
       address(tokenA),
