@@ -4,7 +4,7 @@ import { TransactionResponse } from '@ethersproject/abstract-provider';
 import { constants, erc20, behaviours, bn, wallet, contracts } from '../../utils';
 import { given, then, when } from '../../utils/bdd';
 import { expect } from 'chai';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signers';
 
 describe('DCAPairParameters', function () {
   let owner: SignerWithAddress;
@@ -42,25 +42,28 @@ describe('DCAPairParameters', function () {
   describe('constructor', () => {
     when('global parameters is zero address', () => {
       then('deployment is reverted with reason', async () => {
-        await behaviours.deployShouldRevertWithZeroAddress({
+        await behaviours.deployShouldRevertWithMessage({
           contract: DCAPairParametersContract,
           args: [constants.ZERO_ADDRESS, tokenA.address, tokenB.address],
+          message: 'ZeroAddress',
         });
       });
     });
     when('token A is zero address', () => {
       then('deployment is reverted with reason', async () => {
-        await behaviours.deployShouldRevertWithZeroAddress({
+        await behaviours.deployShouldRevertWithMessage({
           contract: DCAPairParametersContract,
           args: [constants.NOT_ZERO_ADDRESS, constants.ZERO_ADDRESS, tokenB.address],
+          message: 'ZeroAddress',
         });
       });
     });
     when('token B is zero address', () => {
       then('deployment is reverted with reason', async () => {
-        await behaviours.deployShouldRevertWithZeroAddress({
+        await behaviours.deployShouldRevertWithMessage({
           contract: DCAPairParametersContract,
           args: [constants.NOT_ZERO_ADDRESS, tokenA.address, constants.ZERO_ADDRESS],
+          message: 'ZeroAddress',
         });
       });
     });
