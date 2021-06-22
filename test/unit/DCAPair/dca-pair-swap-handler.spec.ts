@@ -772,22 +772,6 @@ describe('DCAPairSwapHandler', () => {
 
   describe('swap', () => {
     swapTestFailed({
-<<<<<<< HEAD
-=======
-      title: 'last swap was < than swap interval ago',
-      lastSwapPerformed: swapInterval * 10,
-      blockTimestamp: swapInterval * 11 - 1,
-      nextSwapToPerform: 2,
-      initialSwapperBalanceTokenA: 1,
-      initialSwapperBalanceTokenB: 1,
-      amountToSwapOfTokenA: 1,
-      amountToSwapOfTokenB: 1,
-      ratePerUnitBToA: 1,
-      reason: 'WithinInterval',
-    });
-
-    swapTestFailed({
->>>>>>> main
       title: 'external amount of token a to be provided is not sent',
       nextSwapToPerform: 2,
       initialSwapperBalanceTokenA: () => tokenA.asUnits(1).sub(1),
@@ -1380,26 +1364,14 @@ describe('DCAPairSwapHandler', () => {
         }
       });
       then('register swaps from tokenA to tokenB with correct information', async () => {
-<<<<<<< HEAD
         const accumRatesPerUnit = await DCAPairSwapHandler.accumRatesPerUnit(SWAP_INTERVAL, tokenA.address, nextSwapToPerform);
         expect(await DCAPairSwapHandler.swapAmountAccumulator(SWAP_INTERVAL, tokenA.address)).to.equal(amountToSwapOfTokenA);
-        expect(accumRatesPerUnit[0]).to.not.equal(0);
-        expect(accumRatesPerUnit[0]).to.equal(ratePerUnitAToB);
+        expect(accumRatesPerUnit).to.equal(ratePerUnitAToB);
       });
       then('register swaps from tokenB to tokenA with correct information', async () => {
         const accumRatesPerUnit = await DCAPairSwapHandler.accumRatesPerUnit(SWAP_INTERVAL, tokenB.address, nextSwapToPerform);
         expect(await DCAPairSwapHandler.swapAmountAccumulator(SWAP_INTERVAL, tokenB.address)).to.equal(amountToSwapOfTokenB);
-        expect(accumRatesPerUnit[0]).to.equal(ratePerUnitBToA);
-=======
-        const accumRatesPerUnit = await DCAPairSwapHandler.accumRatesPerUnit(swapInterval, tokenA.address, nextSwapToPerform);
-        expect(await DCAPairSwapHandler.swapAmountAccumulator(swapInterval, tokenA.address)).to.equal(amountToSwapOfTokenA);
-        expect(accumRatesPerUnit).to.equal(ratePerUnitAToB);
-      });
-      then('register swaps from tokenB to tokenA with correct information', async () => {
-        const accumRatesPerUnit = await DCAPairSwapHandler.accumRatesPerUnit(swapInterval, tokenB.address, nextSwapToPerform);
-        expect(await DCAPairSwapHandler.swapAmountAccumulator(swapInterval, tokenB.address)).to.equal(amountToSwapOfTokenB);
         expect(accumRatesPerUnit).to.equal(ratePerUnitBToA);
->>>>>>> main
       });
       then('sends token a fee correctly to fee recipient', async () => {
         expect(await tokenA.balanceOf(feeRecipient.address)).to.equal(platformFeeTokenA);

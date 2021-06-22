@@ -159,8 +159,8 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
   ) public override nonReentrant {
     IDCAGlobalParameters.SwapParameters memory _swapParameters = globalParameters.swapParameters();
     if (_swapParameters.isPaused) revert CommonErrors.Paused();
-    if (lastSwapPerformed[_swapInterval] / _swapInterval >= _getTimestamp() / _swapInterval) revert WithinInterval();
     NextSwapInformation memory _nextSwapInformation = _getNextSwapInfo(_swapParameters.swapFee);
+    uint32 _swapInterval = _nextSwapInformation.swapsToPerform[0].interval;
     _registerSwap(
       _swapInterval,
       address(tokenA),
