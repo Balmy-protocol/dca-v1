@@ -91,14 +91,16 @@ interface IDCAPairPositionHandler is IDCAPairParameters {
 }
 
 interface IDCAPairSwapHandler {
-  struct Swap {
+  struct SwapInformation {
     uint32 interval;
     uint32 swapToPerform;
+    uint256 amountToSwapTokenA;
+    uint256 amountToSwapTokenB;
   }
 
   // TODO: see if we can optimize this in terms of space
   struct NextSwapInformation {
-    Swap[] swapsToPerform;
+    SwapInformation[] swapsToPerform;
     uint8 amountOfSwaps;
     uint256 amountToSwapTokenA;
     uint256 amountToSwapTokenB;
