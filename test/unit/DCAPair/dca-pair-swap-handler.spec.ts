@@ -333,7 +333,7 @@ describe('DCAPairSwapHandler', () => {
 
   type NextSwapInfo = {
     swapsToPerform: Swap[];
-    amountOfSwaps: Swap[];
+    amountOfSwaps: number;
     amountToSwapTokenA: BigNumber;
     amountToSwapTokenB: BigNumber;
     ratePerUnitBToA: BigNumber;
