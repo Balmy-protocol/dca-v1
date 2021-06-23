@@ -1,11 +1,12 @@
 import { expect } from 'chai';
-import { Contract, ContractFactory, Signer, utils } from 'ethers';
+import { Contract, ContractFactory, utils } from 'ethers';
 import { ethers } from 'hardhat';
 import { TransactionResponse } from '@ethersproject/abstract-provider';
 import { constants, erc20, behaviours } from '../../utils';
 import { given, then, when } from '../../utils/bdd';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signers';
 
+// TODO: unskip
 describe.skip('DCAFactoryPairsHandler', function () {
   let owner: SignerWithAddress;
   let tokenA: Contract, tokenB: Contract;
@@ -42,9 +43,10 @@ describe.skip('DCAFactoryPairsHandler', function () {
   describe('constructor', () => {
     when('globalParameters is zero address', () => {
       then('tx is reverted with reason error', async () => {
-        await behaviours.deployShouldRevertWithZeroAddress({
+        await behaviours.deployShouldRevertWithMessage({
           contract: DCAFactoryPairsHandlerContract,
           args: [constants.ZERO_ADDRESS],
+          message: 'ZeroAddress',
         });
       });
     });
@@ -58,19 +60,21 @@ describe.skip('DCAFactoryPairsHandler', function () {
   describe('createPair', () => {
     when('token A is zero address', () => {
       then('tx is reverted with reason', async () => {
-        await behaviours.txShouldRevertWithZeroAddress({
+        await behaviours.txShouldRevertWithMessage({
           contract: DCAFactoryPairsHandler,
           func: 'createPair',
           args: [constants.ZERO_ADDRESS, tokenB.address],
+          message: 'ZeroAddress',
         });
       });
     });
     when('token B is zero address', () => {
       then('tx is reverted with reason', async () => {
-        await behaviours.txShouldRevertWithZeroAddress({
+        await behaviours.txShouldRevertWithMessage({
           contract: DCAFactoryPairsHandler,
           func: 'createPair',
           args: [tokenA.address, constants.ZERO_ADDRESS],
+          message: 'ZeroAddress',
         });
       });
     });
@@ -80,7 +84,7 @@ describe.skip('DCAFactoryPairsHandler', function () {
           contract: DCAFactoryPairsHandler,
           func: 'createPair',
           args: [tokenA.address, tokenA.address],
-          message: 'DCAFactory: identical addresses',
+          message: 'IdenticalTokens',
         });
       });
     });
@@ -94,7 +98,7 @@ describe.skip('DCAFactoryPairsHandler', function () {
             contract: DCAFactoryPairsHandler,
             func: 'createPair',
             args: [tokenA.address, tokenB.address],
-            message: 'DCAFactory: pair exists',
+            message: 'PairAlreadyExists',
           });
         });
       });
@@ -104,7 +108,7 @@ describe.skip('DCAFactoryPairsHandler', function () {
             contract: DCAFactoryPairsHandler,
             func: 'createPair',
             args: [tokenB.address, tokenA.address],
-            message: 'DCAFactory: pair exists',
+            message: 'PairAlreadyExists',
           });
         });
       });
@@ -156,7 +160,7 @@ describe.skip('DCAFactoryPairsHandler', function () {
     });
   });
 
-  describe.skip('sortTokens', () => {
+  describe('sortTokens', () => {
     when('sorting token addresses', () => {
       let token0: string;
       let token1: string;

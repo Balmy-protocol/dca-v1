@@ -14,10 +14,11 @@ workspace.code-workspace
 # Hardhat
 artifacts
 cache
+deployments
 
 # JS
 node_modules
-package-lock.json
+yarn.lock
 
 # Coverage
 coverage

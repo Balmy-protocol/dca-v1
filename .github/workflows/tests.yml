@@ -33,10 +33,10 @@ jobs:
           node-version: "12.x"
 
       - name: Install dependencies
-        run: npm install
+        run: yarn --frozen-lockfile
 
       - name: Run unit tests
-        run: npm run test:unit
+        run: yarn run test:unit
         timeout-minutes: 15
 
   e2e:
@@ -65,8 +65,8 @@ jobs:
           node-version: "12.x"
 
       - name: Install dependencies
-        run: npm install
+        run: yarn --frozen-lockfile
 
       - name: Run e2e tests
-        run: npm run test:e2e
+        run: yarn test:e2e
         timeout-minutes: 10

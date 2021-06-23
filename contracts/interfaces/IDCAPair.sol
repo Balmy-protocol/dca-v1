@@ -22,14 +22,16 @@ interface IDCAPairParameters {
   function performedSwaps(uint32) external view returns (uint32);
 }
 
-interface IDCAPairPositionHandler {
-  struct DCA {
-    uint32 lastWithdrawSwap;
-    uint32 lastSwap;
-    uint32 swapInterval; // TODO: remove 32 bits from somewhere else
+interface IDCAPairPositionHandler is IDCAPairParameters {
+  struct UserPosition {
+    IERC20Detailed from;
+    IERC20Detailed to;
+    uint32 swapInterval;
+    uint32 swapsExecuted; // Since deposit or last withdraw
+    uint256 swapped; // Since deposit or last withdraw
+    uint32 swapsLeft;
+    uint256 remaining;
     uint192 rate;
-    bool fromTokenA;
-    uint248 swappedBeforeModified;
   }
 
   event Terminated(address indexed _user, uint256 _dcaId, uint256 _returnedUnswapped, uint256 _returnedSwapped);
@@ -46,7 +48,17 @@ interface IDCAPairPositionHandler {
   event WithdrewMany(address indexed _user, uint256[] _dcaIds, uint256 _swappedTokenA, uint256 _swappedTokenB);
   event Modified(address indexed _user, uint256 _dcaId, uint192 _rate, uint32 _startingSwap, uint32 _lastSwap);
 
-  function userPosition(uint256) external view returns (DCA memory);
+  error InvalidToken();
+  error InvalidInterval();
+  error InvalidPosition();
+  error UnauthorizedCaller();
+  error ZeroRate();
+  error ZeroSwaps();
+  error ZeroAmount();
+  error PositionCompleted();
+  error MandatoryWithdraw();
+
+  function userPosition(uint256) external view returns (UserPosition memory _position);
 
   function deposit(
     address _tokenAddress,
@@ -85,8 +97,11 @@ interface IDCAPairSwapHandler {
     uint256 amountToSwapTokenA;
     uint256 amountToSwapTokenB;
   }
+
+  // TODO: see if we can optimize this in terms of space
   struct NextSwapInformation {
     SwapInformation[] swapsToPerform;
+    uint8 amountOfSwaps;
     uint256 amountToSwapTokenA;
     uint256 amountToSwapTokenB;
     uint256 availableToBorrowTokenA;
@@ -109,6 +124,8 @@ interface IDCAPairSwapHandler {
     NextSwapInformation _nextSwapInformation
   );
 
+  error WithinInterval();
+
   function lastSwapPerformed(uint32) external view returns (uint32);
 
   function swapAmountAccumulator(uint32, address) external view returns (uint256);
@@ -129,6 +146,8 @@ interface IDCAPairSwapHandler {
 
 interface IDCAPairLoanHandler {
   event Loaned(address indexed _sender, address indexed _to, uint256 _amountBorrowedTokenA, uint256 _amountBorrowedTokenB, uint32 _loanFee);
+
+  error ZeroLoan();
 
   function loan(
     uint256 _amountToBorrowTokenA,
