@@ -11,7 +11,7 @@ import { TokenContract } from '../../utils/erc20';
 
 const APPLY_FEE = (bn: BigNumber) => bn.mul(3).div(1000);
 
-describe('DCAPairSwapHandler', () => {
+describe.only('DCAPairSwapHandler', () => {
   let owner: SignerWithAddress;
   let feeRecipient: SignerWithAddress;
   let tokenA: TokenContract, tokenB: TokenContract;
@@ -57,7 +57,7 @@ describe('DCAPairSwapHandler', () => {
       DCAGlobalParameters.address, // global parameters
       staticSlidingOracle.address // oracle
     );
-    await DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL], ['NULL']);
+    await DCAPairSwapHandler.addActiveSwapInterval(SWAP_INTERVAL);
   });
 
   describe('constructor', () => {
@@ -404,13 +404,13 @@ describe('DCAPairSwapHandler', () => {
 
   describe('getNextSwapsToPerform', () => {
     getNextSwapsToPerformTest({
-      title: 'no allowed swap interval',
-      context: () => DCAGlobalParameters.removeSwapIntervalsFromAllowedList([SWAP_INTERVAL]),
+      title: 'no active swap interval',
+      context: () => DCAPairSwapHandler.removeActiveSwapInterval(SWAP_INTERVAL),
       nextSwapContext: [],
     });
 
     getNextSwapsToPerformTest({
-      title: 'allowed swap interval is not executable',
+      title: 'active swap interval is not executable',
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -437,7 +437,7 @@ describe('DCAPairSwapHandler', () => {
     });
 
     getNextSwapsToPerformTest({
-      title: 'allowed swap interval is executable',
+      title: 'active swap interval is executable',
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -450,7 +450,7 @@ describe('DCAPairSwapHandler', () => {
 
     getNextSwapsToPerformTest({
       title: 'neither of both intervals are executable',
-      context: () => DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL_2], ['Every 2 days']),
+      context: () => DCAPairSwapHandler.addActiveSwapInterval(SWAP_INTERVAL_2),
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -471,7 +471,7 @@ describe('DCAPairSwapHandler', () => {
 
     getNextSwapsToPerformTest({
       title: 'one of both intervals is executable',
-      context: () => DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL_2], ['Every 2 days']),
+      context: () => DCAPairSwapHandler.addActiveSwapInterval(SWAP_INTERVAL_2),
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -491,7 +491,7 @@ describe('DCAPairSwapHandler', () => {
 
     getNextSwapsToPerformTest({
       title: 'both intervals are executable',
-      context: () => DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL_2], ['Every 2 days']),
+      context: () => DCAPairSwapHandler.addActiveSwapInterval(SWAP_INTERVAL_2),
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -739,7 +739,7 @@ describe('DCAPairSwapHandler', () => {
 
     getNextSwapInfoTest({
       title: 'two intervals, rate per unit is 1:2 and needing token b to be provided externally',
-      context: () => DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL_2], ['Every 2 days']),
+      context: () => DCAPairSwapHandler.addActiveSwapInterval(SWAP_INTERVAL_2),
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -759,7 +759,7 @@ describe('DCAPairSwapHandler', () => {
 
     getNextSwapInfoTest({
       title: 'two intervals, rate per unit is 1:2 and needing token a to be provided externally',
-      context: () => DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL_2], ['Every 2 days']),
+      context: () => DCAPairSwapHandler.addActiveSwapInterval(SWAP_INTERVAL_2),
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -779,7 +779,7 @@ describe('DCAPairSwapHandler', () => {
 
     getNextSwapInfoTest({
       title: 'two intervals, rate per unit is 1:2 and there is no need to provide tokens externally',
-      context: () => DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL_2], ['Every 2 days']),
+      context: () => DCAPairSwapHandler.addActiveSwapInterval(SWAP_INTERVAL_2),
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -802,6 +802,7 @@ describe('DCAPairSwapHandler', () => {
     title,
     context,
     nextSwapContext,
+    addedSwapIntervals,
     blockTimestamp,
     initialSwapperBalanceTokenA,
     initialSwapperBalanceTokenB,
@@ -813,6 +814,7 @@ describe('DCAPairSwapHandler', () => {
     title: string;
     context?: () => Promise<void>;
     nextSwapContext: NextSwapInformationContext[];
+    addedSwapIntervals?: number[];
     blockTimestamp?: number;
     initialSwapperBalanceTokenA: BigNumber | number | string | (() => BigNumber | number | string);
     initialSwapperBalanceTokenB: BigNumber | number | string | (() => BigNumber | number | string);
@@ -829,6 +831,9 @@ describe('DCAPairSwapHandler', () => {
       given(async () => {
         if (context) {
           await context();
+        }
+        for (const interval of addedSwapIntervals ?? []) {
+          await DCAPairSwapHandler.addActiveSwapInterval(interval);
         }
         initialSwapperBalanceTokenA =
           typeof initialSwapperBalanceTokenA === 'function' ? initialSwapperBalanceTokenA() : initialSwapperBalanceTokenA;
@@ -910,6 +915,9 @@ describe('DCAPairSwapHandler', () => {
           expect(await DCAPairSwapHandler.performedSwaps(nextSwapContext[i].interval)).to.equal(0);
         }
       });
+      then('active swap intervals remain the same', async () => {
+        expect(await DCAPairSwapHandler.activeSwapIntervals()).to.eql([SWAP_INTERVAL].concat(addedSwapIntervals ?? []));
+      });
       thenInternalBalancesAreTheSameAsTokenBalances();
     });
   };
@@ -917,7 +925,7 @@ describe('DCAPairSwapHandler', () => {
   describe('swap', () => {
     swapTestFailed({
       title: 'external amount of token a to be provided is not sent',
-      context: () => DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL_2], ['Every 2 days']),
+      addedSwapIntervals: [SWAP_INTERVAL_2],
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -940,7 +948,7 @@ describe('DCAPairSwapHandler', () => {
 
     swapTestFailed({
       title: 'external amount of token b to be provided is not sent',
-      context: () => DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL_2], ['Every 2 days']),
+      addedSwapIntervals: [SWAP_INTERVAL_2],
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -1043,7 +1051,7 @@ describe('DCAPairSwapHandler', () => {
 
     swapTest({
       title: 'two intervals, rate per unit is 1:2 and needing token b to be provided externally',
-      context: () => DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL_2], ['Every 2 days']),
+      addedSwapIntervals: [SWAP_INTERVAL_2],
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -1065,7 +1073,7 @@ describe('DCAPairSwapHandler', () => {
 
     swapTest({
       title: 'two intervals, rate per unit is 1:2 and needing token a to be provided externally',
-      context: () => DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL_2], ['Every 2 days']),
+      addedSwapIntervals: [SWAP_INTERVAL_2],
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -1087,7 +1095,7 @@ describe('DCAPairSwapHandler', () => {
 
     swapTest({
       title: 'two intervals, rate per unit is 1:2 and there is no need to provide tokens externally',
-      context: () => DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL_2], ['Every 2 days']),
+      addedSwapIntervals: [SWAP_INTERVAL_2],
       nextSwapContext: [
         {
           interval: SWAP_INTERVAL,
@@ -1298,6 +1306,10 @@ describe('DCAPairSwapHandler', () => {
         expect(amountBorrowedTokenB).to.equal(availableToBorrowTokenB);
       });
 
+      then('active swap intervals remain the same', async () => {
+        expect(await DCAPairSwapHandler.activeSwapIntervals()).to.eql([SWAP_INTERVAL]);
+      });
+
       thenInternalBalancesAreTheSameAsTokenBalances();
     });
 
@@ -1385,6 +1397,7 @@ describe('DCAPairSwapHandler', () => {
   function swapTest({
     title,
     context,
+    addedSwapIntervals,
     nextSwapContext,
     blockTimestamp,
     initialContractTokenABalance,
@@ -1395,6 +1408,7 @@ describe('DCAPairSwapHandler', () => {
     title: string;
     context?: () => Promise<void>;
     nextSwapContext: NextSwapInformationContext[];
+    addedSwapIntervals?: number[];
     blockTimestamp?: number;
     initialContractTokenABalance: BigNumber | number | string;
     initialContractTokenBBalance: BigNumber | number | string;
@@ -1419,6 +1433,9 @@ describe('DCAPairSwapHandler', () => {
       given(async () => {
         if (context) {
           await context();
+        }
+        for (const interval of addedSwapIntervals ?? []) {
+          await DCAPairSwapHandler.addActiveSwapInterval(interval);
         }
         initialContractTokenABalance = toBN(initialContractTokenABalance, tokenA);
         initialContractTokenBBalance = toBN(initialContractTokenBBalance, tokenB);
@@ -1676,6 +1693,10 @@ describe('DCAPairSwapHandler', () => {
         expect(to).to.equal(owner.address);
         expect(amountBorrowedTokenA).to.equal(constants.ZERO);
         expect(amountBorrowedTokenB).to.equal(constants.ZERO);
+      });
+
+      then('active swap intervals remain the same', async () => {
+        expect(await DCAPairSwapHandler.activeSwapIntervals()).to.eql([SWAP_INTERVAL].concat(addedSwapIntervals ?? []));
       });
 
       thenInternalBalancesAreTheSameAsTokenBalances(threshold as BigNumber);
