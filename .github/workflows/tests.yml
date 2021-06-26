@@ -36,7 +36,7 @@ jobs:
         run: yarn --frozen-lockfile
 
       - name: Run unit tests
-        run: yarn run test:unit
+        run: yarn test:unit
         timeout-minutes: 15
 
   e2e:

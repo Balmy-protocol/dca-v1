@@ -102,8 +102,8 @@ interface IDCAPairSwapHandler {
   struct NextSwapInformation {
     SwapInformation[] swapsToPerform;
     uint8 amountOfSwaps;
-    uint256 amountToSwapTokenA;
-    uint256 amountToSwapTokenB;
+    uint256 amountToSwapTokenA; // TODO: Do we need to expose this?
+    uint256 amountToSwapTokenB; // TODO: Do we need to expose this?
     uint256 availableToBorrowTokenA;
     uint256 availableToBorrowTokenB;
     uint256 ratePerUnitBToA;
