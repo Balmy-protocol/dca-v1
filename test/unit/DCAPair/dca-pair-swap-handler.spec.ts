@@ -11,7 +11,7 @@ import { TokenContract } from '../../utils/erc20';
 
 const APPLY_FEE = (bn: BigNumber) => bn.mul(3).div(1000);
 
-describe.only('DCAPairSwapHandler', () => {
+describe('DCAPairSwapHandler', () => {
   let owner: SignerWithAddress;
   let feeRecipient: SignerWithAddress;
   let tokenA: TokenContract, tokenB: TokenContract;
@@ -410,6 +410,18 @@ describe.only('DCAPairSwapHandler', () => {
     });
 
     getNextSwapsToPerformTest({
+      title: 'active swap interval as 0 amount',
+      nextSwapContext: [
+        {
+          interval: SWAP_INTERVAL,
+          nextSwapToPerform: 5,
+          amountToSwapOfTokenA: 0,
+          amountToSwapOfTokenB: 0,
+        },
+      ],
+    });
+
+    getNextSwapsToPerformTest({
       title: 'active swap interval is not executable',
       nextSwapContext: [
         {
@@ -679,6 +691,19 @@ describe.only('DCAPairSwapHandler', () => {
           nextSwapToPerform: 2,
           amountToSwapOfTokenA: 1.4,
           amountToSwapOfTokenB: 1.3,
+        },
+      ],
+      ratePerUnitBToA: 1,
+    });
+
+    getNextSwapInfoTest({
+      title: 'only one interval but no amount to swap',
+      nextSwapContext: [
+        {
+          interval: SWAP_INTERVAL,
+          nextSwapToPerform: 2,
+          amountToSwapOfTokenA: 0,
+          amountToSwapOfTokenB: 0,
         },
       ],
       ratePerUnitBToA: 1,
@@ -1113,6 +1138,42 @@ describe.only('DCAPairSwapHandler', () => {
       initialContractTokenABalance: 100,
       initialContractTokenBBalance: 100,
       ratePerUnitBToA: 0.5,
+    });
+
+    when('only swap interval has no amount to swap', () => {
+      let swapTx: TransactionResponse;
+      const SWAP_TO_PERFORM = 5;
+
+      given(async () => {
+        await DCAPairSwapHandler.setNextSwapsToPerform([
+          {
+            interval: SWAP_INTERVAL,
+            swapToPerform: SWAP_TO_PERFORM,
+            amountToSwapTokenA: constants.ZERO,
+            amountToSwapTokenB: constants.ZERO,
+          },
+        ]);
+        await setOracleData({ ratePerUnitBToA: tokenA.asUnits(1) });
+
+        swapTx = await DCAPairSwapHandler['swap()']();
+      });
+      then('swap was not registered on token a', async () => {
+        expect(await DCAPairSwapHandler.swapAmountDelta(SWAP_INTERVAL, tokenA.address, SWAP_TO_PERFORM)).to.be.equal(0);
+      });
+      then('swap was not registered on token b', async () => {
+        expect(await DCAPairSwapHandler.swapAmountDelta(SWAP_INTERVAL, tokenB.address, SWAP_TO_PERFORM)).to.be.equal(0);
+      });
+      then('last swap performed did not increase', async () => {
+        expect(await DCAPairSwapHandler.lastSwapPerformed(SWAP_INTERVAL)).to.equal(0);
+      });
+      then('performed swaps did not increase', async () => {
+        expect(await DCAPairSwapHandler.performedSwaps(SWAP_INTERVAL)).to.equal(0);
+      });
+      then('swap interval is removed from active list', async () => {
+        expect(await DCAPairSwapHandler.activeSwapIntervals()).to.be.empty;
+      });
+
+      thenInternalBalancesAreTheSameAsTokenBalances();
     });
   });
 
