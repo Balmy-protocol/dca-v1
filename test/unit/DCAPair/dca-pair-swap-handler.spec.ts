@@ -301,14 +301,20 @@ describe('DCAPairSwapHandler', () => {
     amountToSwapOfTokenB: number;
   };
 
-  type NextSwapInformationContextWithLastSwapPerformedAt = NextSwapInformationContext & { lastSwapPerformedAt?: number };
+  type NextSwapInformationContextWithNextSwapAvailableAt = NextSwapInformationContext & { nextSwapAvailableAt?: number };
 
-  const setNextSwapInfoContext = async ({ nextSwapInfo }: { nextSwapInfo: NextSwapInformationContextWithLastSwapPerformedAt[] }) => {
+  const setNextSwapInfoContext = async ({
+    nextSwapInfo,
+    blockTimestamp,
+  }: {
+    nextSwapInfo: NextSwapInformationContextWithNextSwapAvailableAt[];
+    blockTimestamp: number;
+  }) => {
     for (let i = 0; i < nextSwapInfo.length; i++) {
       const nextSwapToPerform = bn.toBN(nextSwapInfo[i].nextSwapToPerform);
       const amountToSwapOfTokenA = toBN(nextSwapInfo[i].amountToSwapOfTokenA, tokenA);
       const amountToSwapOfTokenB = toBN(nextSwapInfo[i].amountToSwapOfTokenB, tokenB);
-      await DCAPairSwapHandler.setLastSwapPerformed(nextSwapInfo[i].interval, nextSwapInfo[i].lastSwapPerformedAt ?? 0);
+      await DCAPairSwapHandler.setNextSwapAvailable(nextSwapInfo[i].interval, nextSwapInfo[i].nextSwapAvailableAt ?? blockTimestamp);
       await DCAPairSwapHandler.setPerformedSwaps(nextSwapInfo[i].interval, nextSwapToPerform.sub(1));
       await DCAPairSwapHandler.setSwapAmountAccumulator(nextSwapInfo[i].interval, tokenA.address, amountToSwapOfTokenA.div(2));
       await DCAPairSwapHandler.setSwapAmountDelta(nextSwapInfo[i].interval, tokenA.address, nextSwapToPerform, amountToSwapOfTokenA.div(2));
@@ -339,9 +345,9 @@ describe('DCAPairSwapHandler', () => {
     tokenToRewardSwapperWith: string;
   };
 
-  function parseNextSwaps(nextSwapContext: NextSwapInformationContext[]) {
+  function parseNextSwaps(nextSwapContext: NextSwapInformationContext[], blockTimestamp?: number) {
     const parsedNextSwaps = nextSwapContext
-      .filter((nextSwap) => doesSwapNeedToBeExecuted(nextSwap))
+      .filter((nextSwap) => doesSwapNeedToBeExecuted(nextSwap, blockTimestamp))
       .map(({ interval, nextSwapToPerform, amountToSwapOfTokenA, amountToSwapOfTokenB }) => [
         interval,
         nextSwapToPerform,
@@ -361,7 +367,7 @@ describe('DCAPairSwapHandler', () => {
     title: string;
     context?: () => Promise<void>;
     blockTimestamp?: number;
-    nextSwapContext: NextSwapInformationContextWithLastSwapPerformedAt[];
+    nextSwapContext: NextSwapInformationContextWithNextSwapAvailableAt[];
   }) {
     when(title, async () => {
       let nextSwapsToPerform: any[];
@@ -370,13 +376,13 @@ describe('DCAPairSwapHandler', () => {
         if (context) {
           await context();
         }
-        if (blockTimestamp) {
-          await DCAPairSwapHandler.setBlockTimestamp(blockTimestamp);
-        }
+        blockTimestamp = blockTimestamp ?? moment().unix();
+        await DCAPairSwapHandler.setBlockTimestamp(blockTimestamp);
         await setNextSwapInfoContext({
           nextSwapInfo: nextSwapContext,
+          blockTimestamp,
         });
-        ({ nextSwaps: parsedNextSwaps } = parseNextSwaps(nextSwapContext));
+        ({ nextSwaps: parsedNextSwaps } = parseNextSwaps(nextSwapContext, blockTimestamp));
         nextSwapsToPerform = (await DCAPairSwapHandler.getNextSwapsToPerform())[0];
       });
       then('only intervals being executed are non zero', () => {
@@ -427,25 +433,12 @@ describe('DCAPairSwapHandler', () => {
         {
           interval: SWAP_INTERVAL,
           nextSwapToPerform: 5,
-          lastSwapPerformedAt: moment().unix(),
+          nextSwapAvailableAt: 10000 + 1,
           amountToSwapOfTokenA: 100,
           amountToSwapOfTokenB: 200,
         },
       ],
-    });
-
-    getNextSwapsToPerformTest({
-      title: 'last swap was recent but on another interval slot',
-      nextSwapContext: [
-        {
-          interval: SWAP_INTERVAL,
-          lastSwapPerformedAt: SWAP_INTERVAL * 10 - 1,
-          nextSwapToPerform: 5,
-          amountToSwapOfTokenA: 100,
-          amountToSwapOfTokenB: 200,
-        },
-      ],
-      blockTimestamp: SWAP_INTERVAL * 10,
+      blockTimestamp: 10000,
     });
 
     getNextSwapsToPerformTest({
@@ -467,18 +460,19 @@ describe('DCAPairSwapHandler', () => {
         {
           interval: SWAP_INTERVAL,
           nextSwapToPerform: 5,
-          lastSwapPerformedAt: moment().unix(),
+          nextSwapAvailableAt: 10000 + 1,
           amountToSwapOfTokenA: 100,
           amountToSwapOfTokenB: 200,
         },
         {
           interval: SWAP_INTERVAL_2,
           nextSwapToPerform: 105,
-          lastSwapPerformedAt: moment().unix(),
+          nextSwapAvailableAt: 10000 + 1,
           amountToSwapOfTokenA: 100,
           amountToSwapOfTokenB: 200,
         },
       ],
+      blockTimestamp: 10000,
     });
 
     getNextSwapsToPerformTest({
@@ -494,11 +488,12 @@ describe('DCAPairSwapHandler', () => {
         {
           interval: SWAP_INTERVAL_2,
           nextSwapToPerform: 105,
-          lastSwapPerformedAt: moment().unix(),
+          nextSwapAvailableAt: 10000 + 1,
           amountToSwapOfTokenA: 100,
           amountToSwapOfTokenB: 200,
         },
       ],
+      blockTimestamp: 10000,
     });
 
     getNextSwapsToPerformTest({
@@ -521,10 +516,8 @@ describe('DCAPairSwapHandler', () => {
     });
   });
 
-  function doesSwapNeedToBeExecuted(nextSwapContext: NextSwapInformationContextWithLastSwapPerformedAt): boolean {
-    return (
-      Math.floor((nextSwapContext.lastSwapPerformedAt ?? 0) / nextSwapContext.interval) < Math.floor(moment().unix() / nextSwapContext.interval)
-    );
+  function doesSwapNeedToBeExecuted(nextSwapContext: NextSwapInformationContextWithNextSwapAvailableAt, blockTimestamp?: number): boolean {
+    return !blockTimestamp || !nextSwapContext.nextSwapAvailableAt || nextSwapContext.nextSwapAvailableAt <= blockTimestamp;
   }
 
   function getNextSwapInfoTest({
@@ -591,12 +584,6 @@ describe('DCAPairSwapHandler', () => {
         const parsedNextSwaps = parseNextSwaps(nextSwapContext);
         expect(nextSwapInfo.swapsToPerform).to.eql(parsedNextSwaps.nextSwaps);
         expect(nextSwapInfo.amountOfSwaps).to.eql(parsedNextSwaps.amount);
-      });
-      then('amount to swap of token A is correct', () => {
-        expect(nextSwapInfo.amountToSwapTokenA).to.equal(totalAmountToSwapOfTokenA);
-      });
-      then('amount to swap of token B is correct', () => {
-        expect(nextSwapInfo.amountToSwapTokenB).to.equal(totalAmountToSwapOfTokenB);
       });
       then('rate of unit b to a is correct', async () => {
         bn.expectToEqualWithThreshold({
@@ -877,9 +864,8 @@ describe('DCAPairSwapHandler', () => {
         initialPairBalanceTokenA = initialPairBalanceTokenA !== undefined ? toBN(initialPairBalanceTokenA, tokenA) : totalAmountToSwapOfTokenA;
         initialPairBalanceTokenB = initialPairBalanceTokenB !== undefined ? toBN(initialPairBalanceTokenB, tokenB) : totalAmountToSwapOfTokenB;
         ratePerUnitBToA = toBN(ratePerUnitBToA, tokenA);
-        if (blockTimestamp) {
-          await DCAPairSwapHandler.setBlockTimestamp(blockTimestamp);
-        }
+        blockTimestamp = blockTimestamp ?? moment().unix();
+        await DCAPairSwapHandler.setBlockTimestamp(blockTimestamp);
         swapper = await (await wallet.generateRandom()).connect(ethers.provider);
 
         await DCAPairSwapHandler.setNextSwapsToPerform(
@@ -930,9 +916,9 @@ describe('DCAPairSwapHandler', () => {
           ).to.be.equal(0);
         }
       });
-      then('last swap performed did not increase', async () => {
+      then('next swap available did not increase', async () => {
         for (let i = 0; i < nextSwapContext.length; i++) {
-          expect(await DCAPairSwapHandler.lastSwapPerformed(nextSwapContext[i].interval)).to.equal(0);
+          expect(await DCAPairSwapHandler.nextSwapAvailable(nextSwapContext[i].interval)).to.equal(0);
         }
       });
       then('performed swaps did not increase', async () => {
@@ -948,6 +934,15 @@ describe('DCAPairSwapHandler', () => {
   };
 
   describe('swap', () => {
+    swapTestFailed({
+      title: 'there are no swaps to execute',
+      nextSwapContext: [],
+      initialSwapperBalanceTokenA: 0,
+      initialSwapperBalanceTokenB: 0,
+      ratePerUnitBToA: 1,
+      reason: 'NoSwapsToExecute',
+    });
+
     swapTestFailed({
       title: 'external amount of token a to be provided is not sent',
       addedSwapIntervals: [SWAP_INTERVAL_2],
@@ -1518,9 +1513,8 @@ describe('DCAPairSwapHandler', () => {
           tokenToBeProvidedBySwapper,
           tokenToRewardSwapperWith,
         } = calculateSwapDetails(ratePerUnitBToA, totalAmountToSwapOfTokenB, totalAmountToSwapOfTokenA));
-        if (blockTimestamp) {
-          await DCAPairSwapHandler.setBlockTimestamp(blockTimestamp);
-        }
+        blockTimestamp = blockTimestamp ?? moment().unix();
+        await DCAPairSwapHandler.setBlockTimestamp(blockTimestamp);
 
         await DCAPairSwapHandler.setNextSwapsToPerform(
           nextSwapContext.map(({ interval, nextSwapToPerform, amountToSwapOfTokenA, amountToSwapOfTokenB }) => ({
@@ -1689,9 +1683,10 @@ describe('DCAPairSwapHandler', () => {
           expect(await DCAPairSwapHandler.performedSwaps(nextSwapContext[i].interval)).to.equal(nextSwapContext[i].nextSwapToPerform);
         }
       });
-      then('updates last swap performend timestamp', async () => {
+      then('updates next swap available timestamp', async () => {
         for (let i = 0; i < nextSwapContext.length; i++) {
-          expect(await DCAPairSwapHandler.lastSwapPerformed(nextSwapContext[i].interval)).to.be.gt(0);
+          const nextTimestamp = (Math.floor(blockTimestamp! / nextSwapContext[i].interval) + 1) * nextSwapContext[i].interval;
+          expect(await DCAPairSwapHandler.nextSwapAvailable(nextSwapContext[i].interval)).to.equal(nextTimestamp);
         }
       });
       then('emits event with correct information', async () => {
@@ -1699,16 +1694,6 @@ describe('DCAPairSwapHandler', () => {
         const parsedNextSwaps = parseNextSwaps(nextSwapContext);
         expect(nextSwapInformation.swapsToPerform).to.deep.equal(parsedNextSwaps.nextSwaps);
         expect(nextSwapInformation.amountOfSwaps).to.equal(parsedNextSwaps.amount);
-        bn.expectToEqualWithThreshold({
-          value: nextSwapInformation.amountToSwapTokenA,
-          to: totalAmountToSwapOfTokenA,
-          threshold: threshold!,
-        });
-        bn.expectToEqualWithThreshold({
-          value: nextSwapInformation.amountToSwapTokenB,
-          to: totalAmountToSwapOfTokenB,
-          threshold: threshold!,
-        });
         bn.expectToEqualWithThreshold({
           value: nextSwapInformation.ratePerUnitBToA,
           to: ratePerUnitBToA,
@@ -1835,10 +1820,7 @@ describe('DCAPairSwapHandler', () => {
   }
 
   function sumAmountFromContext(nextSwapContext: NextSwapInformationContext[], transform: (context: NextSwapInformationContext) => number) {
-    return nextSwapContext
-      .filter((swapContext) => doesSwapNeedToBeExecuted(swapContext))
-      .map(transform)
-      .reduce((a, b) => a + b, 0);
+    return nextSwapContext.map(transform).reduce((a, b) => a + b, 0);
   }
 
   function toBN(amount: BigNumber | string | number, token: TokenContract): BigNumber {
