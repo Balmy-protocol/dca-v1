@@ -180,7 +180,7 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
         _swapToPerform
       );
       performedSwaps[_swapInterval] = _swapToPerform;
-      nextSwapAvailable[_swapInterval] = (_timestamp / _swapInterval + 1) * _swapInterval;
+      nextSwapAvailable[_swapInterval] = ((_timestamp / _swapInterval) + 1) * _swapInterval;
     }
 
     if (
