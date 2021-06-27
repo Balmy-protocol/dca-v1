@@ -84,7 +84,7 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
     }
   }
 
-  function secondsUntilNextSwap() external view returns (uint32 _secondsUntil) {
+  function secondsUntilNextSwap() public view override returns (uint32 _secondsUntil) {
     _secondsUntil = type(uint32).max;
     uint32 _timestamp = _getTimestamp();
     for (uint256 i; i < _activeSwapIntervals.length(); i++) {
