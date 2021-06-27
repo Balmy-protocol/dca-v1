@@ -1136,7 +1136,6 @@ describe('DCAPairSwapHandler', () => {
     });
 
     when('only swap interval has no amount to swap', () => {
-      let swapTx: TransactionResponse;
       const SWAP_TO_PERFORM = 5;
 
       given(async () => {
@@ -1150,7 +1149,7 @@ describe('DCAPairSwapHandler', () => {
         ]);
         await setOracleData({ ratePerUnitBToA: tokenA.asUnits(1) });
 
-        swapTx = await DCAPairSwapHandler['swap()']();
+        await DCAPairSwapHandler['swap()']();
       });
       then('swap was not registered on token a', async () => {
         expect(await DCAPairSwapHandler.swapAmountDelta(SWAP_INTERVAL, tokenA.address, SWAP_TO_PERFORM)).to.be.equal(0);
@@ -1158,8 +1157,8 @@ describe('DCAPairSwapHandler', () => {
       then('swap was not registered on token b', async () => {
         expect(await DCAPairSwapHandler.swapAmountDelta(SWAP_INTERVAL, tokenB.address, SWAP_TO_PERFORM)).to.be.equal(0);
       });
-      then('last swap performed did not increase', async () => {
-        expect(await DCAPairSwapHandler.lastSwapPerformed(SWAP_INTERVAL)).to.equal(0);
+      then('next swap available did not increase', async () => {
+        expect(await DCAPairSwapHandler.nextSwapAvailable(SWAP_INTERVAL)).to.equal(0);
       });
       then('performed swaps did not increase', async () => {
         expect(await DCAPairSwapHandler.performedSwaps(SWAP_INTERVAL)).to.equal(0);
