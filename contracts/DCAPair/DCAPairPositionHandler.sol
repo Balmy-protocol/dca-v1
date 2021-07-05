@@ -198,7 +198,7 @@ abstract contract DCAPairPositionHandler is ReentrancyGuard, DCAPairParameters, 
 
     // We will store the swapped amount without the fee. The fee will be applied during withdraw/terminate
     uint256 _swapped = _calculateSwapped(_dcaId, false);
-    if (_swapped > type(uint248).max) revert MandatoryWithdraw(); // You should withdraw before modifying, to avoid loosing funds
+    if (_swapped > type(uint248).max) revert MandatoryWithdraw(); // You should withdraw before modifying, to avoid losing funds
 
     uint32 _swapInterval = _userPositions[_dcaId].swapInterval;
     _removePosition(_dcaId);
@@ -289,12 +289,10 @@ abstract contract DCAPairPositionHandler is ReentrancyGuard, DCAPairParameters, 
   }
 
   function _getFrom(uint256 _dcaId) internal view returns (IERC20Detailed _from) {
-    DCA memory _userDCA = _userPositions[_dcaId];
-    _from = _userDCA.fromTokenA ? tokenA : tokenB;
+    _from = _userPositions[_dcaId].fromTokenA ? tokenA : tokenB;
   }
 
   function _getTo(uint256 _dcaId) internal view returns (IERC20Detailed _to) {
-    DCA memory _userDCA = _userPositions[_dcaId];
-    _to = _userDCA.fromTokenA ? tokenB : tokenA;
+    _to = _userPositions[_dcaId].fromTokenA ? tokenB : tokenA;
   }
 }

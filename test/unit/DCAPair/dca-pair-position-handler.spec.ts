@@ -891,7 +891,7 @@ describe('DCAPositionHandler', () => {
             positionRate: 1,
             fee: 0,
           });
-          // We are loosing precision when accumRate is MAX(uint256), but we accept that
+          // We are losing precision when accumRate is MAX(uint256), but we accept that
           expect(swapped.gte('0xffffffffffffffffffffffffffffffffffffffffffffffffffffff2b653b7000')).to.true;
         });
       });
