@@ -1657,28 +1657,20 @@ describe('DCAPairSwapHandler', () => {
       });
       then('token to be provided by swapper needed is provided', async () => {
         if (!tokenToBeProvidedBySwapper) {
-          bn.expectToEqualWithThreshold({
-            value: await tokenA.balanceOf(DCAPairSwapHandler.address),
-            to: (initialContractTokenABalance as BigNumber).sub(platformFeeTokenA),
-            threshold: threshold!,
-          });
-          bn.expectToEqualWithThreshold({
-            value: await tokenB.balanceOf(DCAPairSwapHandler.address),
-            to: (initialContractTokenBBalance as BigNumber).sub(platformFeeTokenB),
-            threshold: threshold!,
-          });
+          expect(await tokenA.balanceOf(DCAPairSwapHandler.address)).to.equal(
+            (initialContractTokenABalance as BigNumber).sub(platformFeeTokenA)
+          );
+          expect(await tokenB.balanceOf(DCAPairSwapHandler.address)).to.equal(
+            (initialContractTokenBBalance as BigNumber).sub(platformFeeTokenB)
+          );
         } else if (tokenToBeProvidedBySwapper() === tokenA.address) {
-          bn.expectToEqualWithThreshold({
-            value: (await tokenA.balanceOf(DCAPairSwapHandler.address)).add(platformFeeTokenA),
-            to: (initialContractTokenABalance as BigNumber).add(amountToBeProvidedBySwapper),
-            threshold: threshold!,
-          });
+          expect(await tokenA.balanceOf(DCAPairSwapHandler.address)).to.equal(
+            (initialContractTokenABalance as BigNumber).add(amountToBeProvidedBySwapper).sub(platformFeeTokenA)
+          );
         } else if (tokenToBeProvidedBySwapper() === tokenB.address) {
-          bn.expectToEqualWithThreshold({
-            value: (await tokenB.balanceOf(DCAPairSwapHandler.address)).add(platformFeeTokenB),
-            to: (initialContractTokenBBalance as BigNumber).add(amountToBeProvidedBySwapper),
-            threshold: threshold!,
-          });
+          expect(await tokenB.balanceOf(DCAPairSwapHandler.address)).to.equal(
+            (initialContractTokenBBalance as BigNumber).add(amountToBeProvidedBySwapper).sub(platformFeeTokenB)
+          );
         }
       });
       then('token to be provided by swapper is taken from swapper', async () => {
@@ -1735,16 +1727,8 @@ describe('DCAPairSwapHandler', () => {
       });
       then('token to reward the swapper (+ fee) is sent to the swapper', async () => {
         if (!tokenToRewardSwapperWith) {
-          bn.expectToEqualWithThreshold({
-            value: await tokenA.balanceOf(owner.address),
-            to: initialSwapperTokenABalance,
-            threshold: constants.ZERO,
-          });
-          bn.expectToEqualWithThreshold({
-            value: await tokenB.balanceOf(owner.address),
-            to: initialSwapperTokenBBalance,
-            threshold: constants.ZERO,
-          });
+          expect(await tokenA.balanceOf(owner.address)).to.equal(initialSwapperTokenABalance);
+          expect(await tokenB.balanceOf(owner.address)).to.equal(initialSwapperTokenBBalance);
         } else if (tokenToRewardSwapperWith() === tokenA.address) {
           bn.expectToEqualWithThreshold({
             value: await tokenA.balanceOf(owner.address),
@@ -1787,10 +1771,18 @@ describe('DCAPairSwapHandler', () => {
         }
       });
       then('sends token a fee correctly to fee recipient', async () => {
-        expect(await tokenA.balanceOf(feeRecipient.address)).to.equal(platformFeeTokenA);
+        bn.expectToEqualWithThreshold({
+          value: await tokenA.balanceOf(feeRecipient.address),
+          to: platformFeeTokenA,
+          threshold: threshold!,
+        });
       });
       then('sends token b fee correctly to fee recipient', async () => {
-        expect(await tokenB.balanceOf(feeRecipient.address)).to.equal(platformFeeTokenB);
+        bn.expectToEqualWithThreshold({
+          value: await tokenB.balanceOf(feeRecipient.address),
+          to: platformFeeTokenB,
+          threshold: threshold!,
+        });
       });
       then('updates performed swaps', async () => {
         for (let i = 0; i < nextSwapContext.length; i++) {
