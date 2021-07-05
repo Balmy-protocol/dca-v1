@@ -6,7 +6,7 @@ import { constants, erc20, behaviours } from '../../utils';
 import { given, then, when } from '../../utils/bdd';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signers';
 
-describe.only('DCAFactoryPairsHandler', function () {
+describe('DCAFactoryPairsHandler', function () {
   let owner: SignerWithAddress;
   let tokenAContract: Contract, tokenBContract: Contract;
   let DCAGlobalParametersContract: ContractFactory, DCAFactoryPairsHandlerContract: ContractFactory;
@@ -126,7 +126,7 @@ describe.only('DCAFactoryPairsHandler', function () {
       then('adds it to the registry', async () => {
         expect(await DCAFactoryPairsHandler.pairByTokens(tokenAContract.address, tokenBContract.address)).to.equal(hipotheticPairAddress);
         expect(await DCAFactoryPairsHandler.pairByTokens(tokenAContract.address, tokenBContract.address)).to.equal(hipotheticPairAddress);
-        expect(await DCAFactoryPairsHandler.allPairs()).to.equal([hipotheticPairAddress]);
+        expect(await DCAFactoryPairsHandler.allPairs()).to.eql([hipotheticPairAddress]);
         expect(await DCAFactoryPairsHandler.isPair(hipotheticPairAddress)).to.be.true;
       });
       then('emits event', async () => {
