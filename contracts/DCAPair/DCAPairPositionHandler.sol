@@ -273,20 +273,7 @@ abstract contract DCAPairPositionHandler is ReentrancyGuard, DCAPairParameters, 
     uint256 _accumPerUnit = _accumRatesLastSwap - _accumRatesLastWidthraw;
     uint256 _magnitude = _userDCA.fromTokenA ? _magnitudeA : _magnitudeB;
     (bool _ok, uint256 _mult) = Math.tryMul(_accumPerUnit, _userDCA.rate);
-    uint256 _swappedInCurrentPosition;
-    if (_ok) {
-      _swappedInCurrentPosition = _mult / _magnitude;
-    } else {
-      // Since we can't multiply accum and rate because of overflows, we need to figure out which to divide
-      // We don't want to divide a term that is smaller than magnitude, because it would go to 0.
-      // And if neither are smaller than magnitude, then we will choose the one that loses less information, and that would be the one with smallest reminder
-      bool _divideAccumFirst = _userDCA.rate < _magnitude ||
-        (_accumPerUnit > _magnitude && _accumPerUnit % _magnitude < _userDCA.rate % _magnitude);
-      _swappedInCurrentPosition = _divideAccumFirst
-        ? (_accumPerUnit / _magnitude) * _userDCA.rate
-        : (_userDCA.rate / _magnitude) * _accumPerUnit;
-    }
-
+    uint256 _swappedInCurrentPosition = _ok ? _mult / _magnitude : (_accumPerUnit / _magnitude) * _userDCA.rate;
     uint256 _actuallySwapped = _swappedInCurrentPosition + _userDCA.swappedBeforeModified;
     _swapped = _applyFee ? _actuallySwapped - _getFeeFromAmount(globalParameters.swapFee(), _actuallySwapped) : _actuallySwapped;
   }
