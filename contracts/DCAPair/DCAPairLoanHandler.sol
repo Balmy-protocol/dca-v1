@@ -55,7 +55,7 @@ abstract contract DCAPairLoanHandler is ReentrancyGuard, DCAPairParameters, IDCA
     if (_afterBalanceTokenA < (_beforeBalanceTokenA + _feeTokenA) || _afterBalanceTokenB < (_beforeBalanceTokenB + _feeTokenB))
       revert CommonErrors.LiquidityNotReturned();
 
-    // Send fees
+    // Send fees and extra
     tokenA.safeTransfer(_loanParameters.feeRecipient, _afterBalanceTokenA - _beforeBalanceTokenA);
     tokenB.safeTransfer(_loanParameters.feeRecipient, _afterBalanceTokenB - _beforeBalanceTokenB);
 
