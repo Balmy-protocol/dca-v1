@@ -6,7 +6,7 @@ import { constants, erc20, behaviours } from '../../utils';
 import { given, then, when } from '../../utils/bdd';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signers';
 
-describe('DCAFactoryPairsHandler', function () {
+describe.only('DCAFactoryPairsHandler', function () {
   let owner: SignerWithAddress;
   let tokenAContract: Contract, tokenBContract: Contract;
   let DCAGlobalParametersContract: ContractFactory, DCAFactoryPairsHandlerContract: ContractFactory;
@@ -126,7 +126,8 @@ describe('DCAFactoryPairsHandler', function () {
       then('adds it to the registry', async () => {
         expect(await DCAFactoryPairsHandler.pairByTokens(tokenAContract.address, tokenBContract.address)).to.equal(hipotheticPairAddress);
         expect(await DCAFactoryPairsHandler.pairByTokens(tokenAContract.address, tokenBContract.address)).to.equal(hipotheticPairAddress);
-        expect(await DCAFactoryPairsHandler.allPairs(0)).to.equal(hipotheticPairAddress);
+        expect(await DCAFactoryPairsHandler.allPairs()).to.equal([hipotheticPairAddress]);
+        expect(await DCAFactoryPairsHandler.isPair(hipotheticPairAddress)).to.be.true;
       });
       then('emits event', async () => {
         const { tokenA, tokenB } = sortTokens(tokenAContract.address, tokenBContract.address);
@@ -180,10 +181,10 @@ describe('DCAFactoryPairsHandler', function () {
         [tokenA, tokenB] = await DCAFactoryPairsHandler.sortTokens(tokenAContract.address, tokenBContract.address);
       });
       then('tokenA is the same', async () => {
-        await expect((await DCAFactoryPairsHandler.sortTokens(tokenAContract.address, tokenBContract.address))[0]).to.equal(tokenA);
+        expect((await DCAFactoryPairsHandler.sortTokens(tokenAContract.address, tokenBContract.address))[0]).to.equal(tokenA);
       });
       then('tokenB is the same', async () => {
-        await expect((await DCAFactoryPairsHandler.sortTokens(tokenAContract.address, tokenBContract.address))[1]).to.equal(tokenB);
+        expect((await DCAFactoryPairsHandler.sortTokens(tokenAContract.address, tokenBContract.address))[1]).to.equal(tokenB);
       });
     });
   });
