@@ -247,12 +247,12 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
     if (_balanceTokenA < _amountToHaveTokenA || _balanceTokenB < _amountToHaveTokenB) revert CommonErrors.LiquidityNotReturned();
 
     // Update balances
-    _balances[address(tokenA)] = _balanceTokenA - _nextSwapInformation.platformFeeTokenA;
-    _balances[address(tokenB)] = _balanceTokenB - _nextSwapInformation.platformFeeTokenB;
+    _balances[address(tokenA)] = _amountToHaveTokenA - _nextSwapInformation.platformFeeTokenA;
+    _balances[address(tokenB)] = _amountToHaveTokenB - _nextSwapInformation.platformFeeTokenB;
 
-    // Send fees
-    tokenA.safeTransfer(_swapParameters.feeRecipient, _nextSwapInformation.platformFeeTokenA);
-    tokenB.safeTransfer(_swapParameters.feeRecipient, _nextSwapInformation.platformFeeTokenB);
+    // Send fees and extra
+    tokenA.safeTransfer(_swapParameters.feeRecipient, _nextSwapInformation.platformFeeTokenA + (_balanceTokenA - _amountToHaveTokenA));
+    tokenB.safeTransfer(_swapParameters.feeRecipient, _nextSwapInformation.platformFeeTokenB + (_balanceTokenB - _amountToHaveTokenB));
 
     // Emit event
     emit Swapped(msg.sender, _to, _amountToBorrowTokenA, _amountToBorrowTokenB, _nextSwapInformation);

@@ -1350,6 +1350,14 @@ describe('DCAPairSwapHandler', () => {
         expect(pairTokenBBalance).to.equal(pairInitialBalanceTokenB.add(amountToBeProvidedBySwapper).sub(platformFeeTokenB));
       });
 
+      then('fee recipient balance is modified correctly', async () => {
+        const feeRecipientTokenABalance = await tokenA.balanceOf(feeRecipient.address);
+        const feeRecipientTokenBBalance = await tokenB.balanceOf(feeRecipient.address);
+
+        expect(feeRecipientTokenABalance).to.equal(platformFeeTokenA);
+        expect(feeRecipientTokenBBalance).to.equal(platformFeeTokenB);
+      });
+
       then('emits event with correct information', async () => {
         const sender = await readArgFromEvent(tx, 'Swapped', '_sender');
         const to = await readArgFromEvent(tx, 'Swapped', '_to');
@@ -1363,6 +1371,42 @@ describe('DCAPairSwapHandler', () => {
 
       then('active swap intervals remain the same', async () => {
         expect(await DCAPairSwapHandler.activeSwapIntervals()).to.eql([SWAP_INTERVAL]);
+      });
+
+      thenInternalBalancesAreTheSameAsTokenBalances();
+    });
+
+    when('more tokens than expected are returned', () => {
+      let tx: TransactionResponse;
+
+      given(async () => {
+        await DCAPairSwapCallee.returnSpecificAmounts(
+          availableToBorrowTokenA.add(1),
+          availableToBorrowTokenB.add(amountToBeProvidedBySwapper).add(1)
+        );
+
+        tx = await DCAPairSwapHandler['swap(uint256,uint256,address,bytes)'](
+          availableToBorrowTokenA,
+          availableToBorrowTokenB,
+          DCAPairSwapCallee.address,
+          BYTES
+        );
+      });
+
+      then('extra tokens are sent to fee recipient', async () => {
+        const feeRecipientTokenABalance = await tokenA.balanceOf(feeRecipient.address);
+        const feeRecipientTokenBBalance = await tokenB.balanceOf(feeRecipient.address);
+
+        expect(feeRecipientTokenABalance).to.equal(platformFeeTokenA.add(1));
+        expect(feeRecipientTokenBBalance).to.equal(platformFeeTokenB.add(1));
+      });
+
+      then('pair balance is modified correctly', async () => {
+        const pairTokenABalance = await tokenA.balanceOf(DCAPairSwapHandler.address);
+        const pairTokenBBalance = await tokenB.balanceOf(DCAPairSwapHandler.address);
+
+        expect(pairTokenABalance).to.equal(pairInitialBalanceTokenA.sub(amountToRewardSwapperWith).sub(platformFeeTokenA));
+        expect(pairTokenBBalance).to.equal(pairInitialBalanceTokenB.add(amountToBeProvidedBySwapper).sub(platformFeeTokenB));
       });
 
       thenInternalBalancesAreTheSameAsTokenBalances();
