@@ -9,13 +9,16 @@ import '../libraries/CommonErrors.sol';
 contract DCASwapper is IDCASwapper, Governable {
   using EnumerableSet for EnumerableSet.AddressSet;
 
+  IDCAFactory public immutable override factory;
   EnumerableSet.AddressSet internal _watchedPairs;
 
-  constructor(address _governor) Governable(_governor) {}
+  constructor(address _governor, IDCAFactory _factory) Governable(_governor) {
+    factory = _factory;
+  }
 
   function startWatchingPairs(address[] calldata _pairs) public override onlyGovernor {
     for (uint256 i; i < _pairs.length; i++) {
-      if (_pairs[i] == address(0)) revert CommonErrors.ZeroAddress();
+      if (!factory.isPair(_pairs[i])) revert InvalidPairAddress();
       _watchedPairs.add(_pairs[i]);
     }
     emit WatchingNewPairs(_pairs);

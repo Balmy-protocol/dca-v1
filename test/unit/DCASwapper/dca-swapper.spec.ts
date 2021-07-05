@@ -2,77 +2,89 @@ import { expect } from 'chai';
 import { Contract, ContractFactory } from 'ethers';
 import { TransactionResponse } from '@ethersproject/abstract-provider';
 import { ethers } from 'hardhat';
-import { constants, behaviours, bn, contracts } from '../../utils';
+import { behaviours } from '../../utils';
 import { given, then, when } from '../../utils/bdd';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signers';
 
 describe('DCASwapper', () => {
+  const ADDRESS_1 = '0x0000000000000000000000000000000000000001';
+  const ADDRESS_2 = '0x0000000000000000000000000000000000000002';
+
   let owner: SignerWithAddress;
   let DCASwapperContract: ContractFactory;
+  let DCAFactoryContract: ContractFactory;
   let DCASwapper: Contract;
+  let DCAFactory: Contract;
 
   before('Setup accounts and contracts', async () => {
     [owner] = await ethers.getSigners();
     DCASwapperContract = await ethers.getContractFactory('contracts/mocks/DCASwapper/DCASwapper.sol:DCASwapperMock');
+    DCAFactoryContract = await ethers.getContractFactory('contracts/mocks/DCASwapper/DCAFactoryMock.sol:DCAFactoryMock');
   });
 
   beforeEach('Deploy and configure', async () => {
-    DCASwapper = await DCASwapperContract.deploy(owner.address);
+    DCAFactory = await DCAFactoryContract.deploy();
+    DCASwapper = await DCASwapperContract.deploy(owner.address, DCAFactory.address);
   });
 
   describe('startWatchingPairs', () => {
-    when('one of the pairs is zero address', () => {
+    when('one of the pairs is not a DCA pair', () => {
+      given(async () => {
+        await DCAFactory.setAsPair(ADDRESS_1);
+      });
       then('tx is reverted with reason', async () => {
         await behaviours.txShouldRevertWithMessage({
           contract: DCASwapper,
           func: 'startWatchingPairs',
-          args: [[constants.NOT_ZERO_ADDRESS, constants.ZERO_ADDRESS]],
-          message: 'ZeroAddress',
+          args: [[ADDRESS_1, ADDRESS_2]],
+          message: 'InvalidPairAddress',
         });
         await behaviours.txShouldRevertWithMessage({
           contract: DCASwapper,
           func: 'startWatchingPairs',
-          args: [[constants.ZERO_ADDRESS, constants.NOT_ZERO_ADDRESS]],
-          message: 'ZeroAddress',
+          args: [[ADDRESS_2, ADDRESS_1]],
+          message: 'InvalidPairAddress',
         });
       });
     });
-    when('pairs are not zero', () => {
-      const ADDRESSES = ['0x0000000000000000000000000000000000000001', '0x0000000000000000000000000000000000000002'];
+    when('addresses are valid pairs', () => {
       let tx: TransactionResponse;
 
       given(async () => {
-        tx = await DCASwapper.startWatchingPairs(ADDRESSES);
+        await DCAFactory.setAsPair(ADDRESS_1);
+        await DCAFactory.setAsPair(ADDRESS_2);
+        tx = await DCASwapper.startWatchingPairs([ADDRESS_1, ADDRESS_2]);
       });
 
       then('pairs are added', async () => {
-        expect(await DCASwapper.watchedPairs()).to.eql(ADDRESSES);
+        expect(await DCASwapper.watchedPairs()).to.eql([ADDRESS_1, ADDRESS_2]);
       });
 
       then('event is emmitted', async () => {
-        await expect(tx).to.emit(DCASwapper, 'WatchingNewPairs').withArgs(ADDRESSES);
+        await expect(tx).to.emit(DCASwapper, 'WatchingNewPairs').withArgs([ADDRESS_1, ADDRESS_2]);
       });
     });
     behaviours.shouldBeExecutableOnlyByGovernor({
       contract: () => DCASwapper,
       funcAndSignature: 'startWatchingPairs(address[])',
-      params: [[constants.NOT_ZERO_ADDRESS]],
+      params: [[ADDRESS_1]],
       governor: () => owner,
     });
   });
   describe('stopWatchingPairs', () => {
     given(async () => {
-      await DCASwapper.startWatchingPairs([constants.NOT_ZERO_ADDRESS]);
+      await DCAFactory.setAsPair(ADDRESS_1);
+      await DCASwapper.startWatchingPairs([ADDRESS_1]);
     });
     when('address being watch is removed', () => {
       let tx: TransactionResponse;
 
       given(async () => {
-        tx = await DCASwapper.stopWatchingPairs([constants.NOT_ZERO_ADDRESS]);
+        tx = await DCASwapper.stopWatchingPairs([ADDRESS_1]);
       });
 
       then('event is emitted', async () => {
-        await expect(tx).to.emit(DCASwapper, 'StoppedWatchingPairs').withArgs([constants.NOT_ZERO_ADDRESS]);
+        await expect(tx).to.emit(DCASwapper, 'StoppedWatchingPairs').withArgs([ADDRESS_1]);
       });
       then('pair is no longer watched', async () => {
         expect(await DCASwapper.watchedPairs()).to.be.empty;
@@ -81,7 +93,7 @@ describe('DCASwapper', () => {
     behaviours.shouldBeExecutableOnlyByGovernor({
       contract: () => DCASwapper,
       funcAndSignature: 'stopWatchingPairs(address[])',
-      params: [[constants.NOT_ZERO_ADDRESS]],
+      params: [[ADDRESS_1]],
       governor: () => owner,
     });
   });
