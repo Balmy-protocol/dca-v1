@@ -53,12 +53,12 @@ describe('DCASwapper', () => {
     });
     when('all arguments are valid', () => {
       then('factory is set correctly', async () => {
-        const globalParameters = await DCASwapper.factory();
-        expect(globalParameters).to.equal(DCAFactory.address);
+        const factory = await DCASwapper.factory();
+        expect(factory).to.equal(DCAFactory.address);
       });
       then('router is set correctly', async () => {
-        const globalParameters = await DCASwapper.swapRouter();
-        expect(globalParameters).to.equal(UniswapRouter.address);
+        const router = await DCASwapper.swapRouter();
+        expect(router).to.equal(UniswapRouter.address);
       });
     });
   });
