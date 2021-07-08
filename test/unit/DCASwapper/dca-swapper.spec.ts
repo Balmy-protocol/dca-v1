@@ -368,7 +368,7 @@ describe('DCASwapper', () => {
       await DCAFactory.setAsPair(ADDRESS_3);
     });
 
-    when('there are not pairs being watched', () => {
+    when('there are no pairs being watched', () => {
       then('empty list is returned', async () => {
         const pairsToSwap = await DCASwapper.callStatic.getPairsToSwap();
         expect(pairsToSwap).to.be.empty;
