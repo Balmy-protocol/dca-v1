@@ -82,7 +82,7 @@ contract DCASwapper is IDCASwapper, Governable, IDCAPairSwapCallee {
   function swapPairs(IDCAPair[] calldata _pairsToSwap) external override returns (uint256 _amountSwapped) {
     if (_pairsToSwap.length == 0) revert ZeroPairsToSwap();
 
-    uint256 _maxGasSpent = 0;
+    uint256 _maxGasSpent;
 
     do {
       uint256 _gasLeftStart = gasleft();
