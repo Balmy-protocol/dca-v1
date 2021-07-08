@@ -6,7 +6,7 @@ import { constants, behaviours, bn, contracts } from '../../utils';
 import { given, then, when } from '../../utils/bdd';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signers';
 
-describe.only('DCAGlobalParameters', () => {
+describe('DCAGlobalParameters', () => {
   let owner: SignerWithAddress, feeRecipient: SignerWithAddress, nftDescriptor: SignerWithAddress, oracle: SignerWithAddress;
   let DCAGlobalParametersContract: ContractFactory;
   let DCAGlobalParameters: Contract;
