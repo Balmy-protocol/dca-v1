@@ -17,8 +17,8 @@ describe('DCAPairSwapHandler', () => {
   let tokenA: TokenContract, tokenB: TokenContract;
   let DCAPairSwapHandlerContract: ContractFactory;
   let DCAPairSwapHandler: Contract;
-  let staticSlidingOracleContract: ContractFactory;
-  let staticSlidingOracle: Contract;
+  let TimeWeightedOracleContract: ContractFactory;
+  let TimeWeightedOracle: Contract;
   let DCAGlobalParametersContract: ContractFactory;
   let DCAGlobalParameters: Contract;
   const SWAP_INTERVAL = moment.duration(1, 'days').as('seconds');
@@ -30,7 +30,7 @@ describe('DCAPairSwapHandler', () => {
       'contracts/mocks/DCAGlobalParameters/DCAGlobalParameters.sol:DCAGlobalParametersMock'
     );
     DCAPairSwapHandlerContract = await ethers.getContractFactory('contracts/mocks/DCAPair/DCAPairSwapHandler.sol:DCAPairSwapHandlerMock');
-    staticSlidingOracleContract = await ethers.getContractFactory('contracts/mocks/StaticSlidingOracle.sol:StaticSlidingOracle');
+    TimeWeightedOracleContract = await ethers.getContractFactory('contracts/mocks/DCAPair/TimeWeightedOracleMock.sol:TimeWeightedOracleMock');
   });
 
   beforeEach('Deploy and configure', async () => {
@@ -49,12 +49,12 @@ describe('DCAPairSwapHandler', () => {
       initialAccount: owner.address,
       initialAmount: ethers.constants.MaxUint256.div(2),
     });
-    staticSlidingOracle = await staticSlidingOracleContract.deploy(0, 0);
+    TimeWeightedOracle = await TimeWeightedOracleContract.deploy(0, 0);
     DCAGlobalParameters = await DCAGlobalParametersContract.deploy(
       owner.address,
       feeRecipient.address,
       constants.NOT_ZERO_ADDRESS,
-      staticSlidingOracle.address
+      TimeWeightedOracle.address
     );
     DCAPairSwapHandler = await DCAPairSwapHandlerContract.deploy(
       tokenA.address,
@@ -258,7 +258,7 @@ describe('DCAPairSwapHandler', () => {
 
   const setOracleData = async ({ ratePerUnitBToA }: { ratePerUnitBToA: BigNumber }) => {
     const tokenBDecimals = BigNumber.from(await tokenB.decimals());
-    await staticSlidingOracle.setRate(ratePerUnitBToA, tokenBDecimals);
+    await TimeWeightedOracle.setRate(ratePerUnitBToA, tokenBDecimals);
   };
 
   type NextSwapInformationContext = {
