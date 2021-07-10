@@ -253,7 +253,7 @@ describe('UniswapV3Oracle', () => {
       });
 
       // TODO: Implement and unskip
-      then.skip(`it is still added to list of pair's list of pools`, async () => {
+      then.skip(`correct pool is still added to list of pair's list of pools`, async () => {
         expect(await UniswapV3Oracle.poolsUsedForPair(TOKEN_A, TOKEN_B)).to.eql([UniswapV3Pool.address]);
       });
     });
