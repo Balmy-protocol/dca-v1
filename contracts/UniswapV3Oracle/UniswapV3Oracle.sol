@@ -56,10 +56,9 @@ contract UniswapV3Oracle is IUniswapV3OracleAggregator, Governable {
       revert GreaterThanMaximumPeriod();
     } else if (_period < MINIMUM_PERIOD) {
       revert LessThanMinimumPeriod();
-    } else {
-      period = _period;
-      emit PeriodChanged(_period);
     }
+    period = _period;
+    emit PeriodChanged(_period);
   }
 
   function addFeeTier(uint24 _feeTier) external override onlyGovernor {
