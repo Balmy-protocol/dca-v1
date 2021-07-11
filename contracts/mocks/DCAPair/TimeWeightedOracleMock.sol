@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.4;
+pragma solidity >=0.5.0;
 
 import '../../interfaces/ITimeWeightedOracle.sol';
 
@@ -25,7 +25,7 @@ contract TimeWeightedOracleMock is ITimeWeightedOracle {
 
   function quote(
     address _tokenIn,
-    uint256 _amountIn,
+    uint128 _amountIn,
     address _tokenOut
   ) public view override returns (uint256 _amountOut) {
     _tokenIn;
