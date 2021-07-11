@@ -131,6 +131,7 @@ abstract contract DCAPairPositionHandler is ReentrancyGuard, DCAPairParameters, 
   }
 
   function modifyRate(uint256 _dcaId, uint160 _newRate) public override nonReentrant {
+    _assertPositionExistsAndCanBeOperatedByCaller(_dcaId);
     uint32 _swapsLeft = _userPositions[_dcaId].lastSwap - performedSwaps[_userPositions[_dcaId].swapInterval];
     if (_swapsLeft == 0) revert PositionCompleted();
 
@@ -243,7 +244,7 @@ abstract contract DCAPairPositionHandler is ReentrancyGuard, DCAPairParameters, 
 
     if (_lastSwap > _performedSwaps) {
       int160 _rate = int160(_userPositions[_dcaId].rate);
-      address _from = _userPositions[_dcaId].fromTokenA ? address(tokenA) : address(tokenB);
+      address _from = address(_getFrom(_dcaId));
       swapAmountDelta[_swapInterval][_from][_performedSwaps + 1] -= _rate;
       swapAmountDelta[_swapInterval][_from][_lastSwap + 1] += _rate;
     }
