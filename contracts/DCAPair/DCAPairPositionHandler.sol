@@ -134,11 +134,11 @@ abstract contract DCAPairPositionHandler is ReentrancyGuard, DCAPairParameters, 
     uint32 _swapsLeft = _userPositions[_dcaId].lastSwap - performedSwaps[_userPositions[_dcaId].swapInterval];
     if (_swapsLeft == 0) revert PositionCompleted();
 
-    modifyRateAndSwaps(_dcaId, _newRate, _swapsLeft);
+    _modifyRateAndSwaps(_dcaId, _newRate, _swapsLeft);
   }
 
   function modifySwaps(uint256 _dcaId, uint32 _newSwaps) public override nonReentrant {
-    modifyRateAndSwaps(_dcaId, _userPositions[_dcaId].rate, _newSwaps);
+    _modifyRateAndSwaps(_dcaId, _userPositions[_dcaId].rate, _newSwaps);
   }
 
   function modifyRateAndSwaps(
@@ -146,7 +146,7 @@ abstract contract DCAPairPositionHandler is ReentrancyGuard, DCAPairParameters, 
     uint160 _newRate,
     uint32 _newAmountOfSwaps
   ) public override nonReentrant {
-    _modifyPosition(_dcaId, _newRate * _newAmountOfSwaps, _calculateUnswapped(_dcaId), _newRate, _newAmountOfSwaps);
+    _modifyRateAndSwaps(_dcaId, _newRate, _newAmountOfSwaps);
   }
 
   function addFundsToPosition(
@@ -164,6 +164,15 @@ abstract contract DCAPairPositionHandler is ReentrancyGuard, DCAPairParameters, 
 
   function tokenURI(uint256 tokenId) public view override returns (string memory) {
     return globalParameters.nftDescriptor().tokenURI(this, tokenId);
+  }
+
+  /** Helper function to modify a position */
+  function _modifyRateAndSwaps(
+    uint256 _dcaId,
+    uint160 _newRate,
+    uint32 _newAmountOfSwaps
+  ) internal {
+    _modifyPosition(_dcaId, _newRate * _newAmountOfSwaps, _calculateUnswapped(_dcaId), _newRate, _newAmountOfSwaps);
   }
 
   function _modifyPosition(
