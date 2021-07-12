@@ -40,7 +40,7 @@ contract DCAGlobalParameters is IDCAGlobalParameters, AccessControl, Pausable {
     ) revert CommonErrors.ZeroAddress();
     _setupRole(IMMEDIATE_ROLE, _immediateGovernor);
     _setupRole(TIME_LOCKED_ROLE, _timeLockedGovernor);
-    // We set each role as it's own admin, so they can assign new addresses with the same role
+    // We set each role as its own admin, so they can assign new addresses with the same role
     _setRoleAdmin(IMMEDIATE_ROLE, IMMEDIATE_ROLE);
     _setRoleAdmin(TIME_LOCKED_ROLE, TIME_LOCKED_ROLE);
     feeRecipient = _feeRecipient;
