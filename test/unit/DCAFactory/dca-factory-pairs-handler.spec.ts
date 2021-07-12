@@ -43,6 +43,7 @@ describe('DCAFactoryPairsHandler', function () {
       owner.address,
       constants.NOT_ZERO_ADDRESS,
       constants.NOT_ZERO_ADDRESS,
+      constants.NOT_ZERO_ADDRESS,
       timeWeightedOracle.address
     );
 

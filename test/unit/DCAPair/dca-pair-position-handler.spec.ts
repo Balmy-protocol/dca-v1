@@ -58,6 +58,7 @@ describe('DCAPositionHandler', () => {
       owner.address,
       constants.NOT_ZERO_ADDRESS,
       constants.NOT_ZERO_ADDRESS,
+      constants.NOT_ZERO_ADDRESS,
       constants.NOT_ZERO_ADDRESS
     );
     DCAPositionHandler = await DCAPositionHandlerContract.deploy(DCAGlobalParameters.address, tokenA.address, tokenB.address);
