@@ -423,8 +423,16 @@ contract('DCAPair', () => {
       return assertPositionIsConsistent(position);
     }
 
-    async function assertAvailableToBorrowIs({ tokenA, tokenB }: { tokenA: number | BigNumber; tokenB: number | BigNumber }) {
-      // TODO: implement when we add function
+    async function assertAvailableToBorrowIs({
+      tokenA: amountTokenA,
+      tokenB: amountTokenB,
+    }: {
+      tokenA: number | BigNumber;
+      tokenB: number | BigNumber;
+    }) {
+      const [availableToBorrowA, availableToBorrowB] = await DCAPair.availableToBorrow();
+      expect(availableToBorrowA).to.equal(BigNumber.isBigNumber(amountTokenA) ? amountTokenA : tokenA.asUnits(amountTokenA));
+      expect(availableToBorrowB).to.equal(BigNumber.isBigNumber(amountTokenB) ? amountTokenB : tokenB.asUnits(amountTokenB));
     }
 
     async function assertPositionIsConsistent(
