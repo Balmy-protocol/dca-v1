@@ -43,13 +43,16 @@ contract('DCAPair', () => {
       tokenA = await erc20.deploy({
         name: 'tokenA',
         symbol: 'TKNA',
+        decimals: 12,
       });
       tokenB = await erc20.deploy({
         name: 'tokenB',
         symbol: 'TKNB',
+        decimals: 16,
       });
 
-      TimeWeightedOracle = await TimeWeightedOracleFactory.deploy(tokenA.asUnits(swapRatio1.tokenA), tokenA.amountOfDecimals); // 1 token B = 2 token A
+      TimeWeightedOracle = await TimeWeightedOracleFactory.deploy(0, 0);
+      await setSwapRatio(swapRatio1);
       DCAGlobalParameters = await DCAGlobalParametersFactory.deploy(
         governor.address,
         governor.address,
@@ -295,7 +298,7 @@ contract('DCAPair', () => {
     }
 
     async function setSwapRatio(ratio: SwapRatio) {
-      await TimeWeightedOracle.setRate(tokenA.asUnits(ratio.tokenA / ratio.tokenB), tokenA.amountOfDecimals);
+      await TimeWeightedOracle.setRate(tokenA.asUnits(ratio.tokenA / ratio.tokenB), tokenB.amountOfDecimals);
     }
 
     async function withdraw(position: UserPositionDefinition): Promise<void> {
@@ -377,7 +380,8 @@ contract('DCAPair', () => {
           const rateBN = from.asUnits(rate);
           const tempRatio = to.address === tokenB.address ? ratio.tokenB / ratio.tokenA : ratio.tokenA / ratio.tokenB;
           const swapped = tempRatio < 1 ? rateBN.div(1 / tempRatio) : rateBN.mul(tempRatio);
-          return substractFee(fee, swapped);
+          const withCorrectDecimals = swapped.mul(to.magnitude).div(from.magnitude);
+          return substractFee(fee, withCorrectDecimals);
         })
         .reduce(sumBN);
     }
@@ -402,7 +406,7 @@ contract('DCAPair', () => {
       const totalTokenA = swapsToPerform.map(({ amountToSwapTokenA }) => amountToSwapTokenA).reduce(sumBN, constants.ZERO);
       const totalTokenB = swapsToPerform.map(({ amountToSwapTokenB }) => amountToSwapTokenB).reduce(sumBN, constants.ZERO);
       expect(totalTokenA).to.equal(tokenA.asUnits(expectedTokenA));
-      expect(totalTokenB).to.equal(tokenA.asUnits(expectedTokenB));
+      expect(totalTokenB).to.equal(tokenB.asUnits(expectedTokenB));
     }
 
     async function assertIntervalsToSwapNowAre(...swapIntervals: number[]): Promise<void> {
