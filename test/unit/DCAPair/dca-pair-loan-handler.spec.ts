@@ -10,7 +10,7 @@ import { TokenContract } from '../../utils/erc20';
 const WITH_FEE = (bn: BigNumber) => bn.add(CALCULATE_FEE(bn));
 const CALCULATE_FEE = (bn: BigNumber) => bn.mul(1).div(1000);
 
-describe('DCAPairLoanHandler', () => {
+describe.only('DCAPairLoanHandler', () => {
   let owner: SignerWithAddress;
   let feeRecipient: SignerWithAddress;
   let tokenA: TokenContract, tokenB: TokenContract;
@@ -45,6 +45,22 @@ describe('DCAPairLoanHandler', () => {
       constants.NOT_ZERO_ADDRESS
     );
     DCAPairLoanHandler = await DCAPairLoanHandlerContract.deploy(tokenA.address, tokenB.address, DCAGlobalParameters.address);
+  });
+
+  describe('availableToBorrow', () => {
+    let balanceTokenA: BigNumber, balanceTokenB: BigNumber;
+    given(async () => {
+      [balanceTokenA, balanceTokenB] = [tokenA.asUnits(10), tokenB.asUnits(100)];
+      await DCAPairLoanHandler.setInternalBalances(balanceTokenA, balanceTokenB);
+    });
+
+    when('checking how much is available to borrow', () => {
+      then('the amounts are the internal balances', async () => {
+        const [availableToBorrowA, availableToBorrowB] = await DCAPairLoanHandler.availableToBorrow();
+        expect(availableToBorrowA).to.equal(balanceTokenA);
+        expect(availableToBorrowB).to.equal(balanceTokenB);
+      });
+    });
   });
 
   describe('flash loan', () => {
