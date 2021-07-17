@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, Contract, ContractFactory, utils } from 'ethers';
+import { BigNumber, Contract, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
 import { erc20, behaviours, constants } from '../../utils';
 import { expect } from 'chai';
@@ -9,7 +9,7 @@ import { TokenContract } from '../../utils/erc20';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signers';
 import moment from 'moment';
 
-describe.only('DCAPositionHandler', () => {
+describe('DCAPositionHandler', () => {
   const PERFORMED_SWAPS_10 = 10;
   const POSITION_RATE_5 = 5;
   const POSITION_SWAPS_TO_PERFORM_10 = 10;
@@ -840,9 +840,6 @@ describe.only('DCAPositionHandler', () => {
       then('swapped is calculated correctly', async () => {
         const { dcaId } = await deposit({ token: tokenA, rate: 1, swaps: 1 });
 
-        // Turn fees to zero
-        await DCAGlobalParameters.setSwapFee(0);
-
         // Set a value in PERFORMED_SWAPS_10 + 1
         await setRatePerUnit({
           accumRate: 1000000,
@@ -880,7 +877,6 @@ describe.only('DCAPositionHandler', () => {
           const swapped = await calculateSwappedWith({
             accumRate: constants.MAX_UINT_256,
             positionRate: 1,
-            fee: 0,
           });
           // We are losing precision when accumRate is MAX(uint256), but we accept that
           expect(swapped.gte('0xffffffffffffffffffffffffffffffffffffffffffffffffffffff2b653b7000')).to.true;
@@ -888,17 +884,8 @@ describe.only('DCAPositionHandler', () => {
       });
     });
 
-    async function calculateSwappedWith({
-      accumRate,
-      positionRate,
-      fee,
-    }: {
-      accumRate: number | BigNumber;
-      positionRate?: number;
-      fee?: number | BigNumber;
-    }) {
+    async function calculateSwappedWith({ accumRate, positionRate }: { accumRate: number | BigNumber; positionRate?: number }) {
       const { dcaId } = await deposit({ token: tokenA, rate: positionRate ?? 1, swaps: 1 });
-      if (fee !== undefined) await DCAGlobalParameters.setSwapFee(fee);
       await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, PERFORMED_SWAPS_10 + 1);
       await setRatePerUnit({
         accumRate,
@@ -1090,7 +1077,7 @@ describe.only('DCAPositionHandler', () => {
     await DCAPositionHandler.setPerformedSwaps(SWAP_INTERVAL, swap);
     await DCAPositionHandler.setRatePerUnit(SWAP_INTERVAL, fromTokenReal.address, swap, toToken.asUnits(ratePerUnit));
     await fromTokenReal.burn(DCAPositionHandler.address, fromTokenReal.asUnits(amount));
-    await toToken.mint(DCAPositionHandler.address, toToken.asUnits(amount * ratePerUnit)); // We calculate and subtract the fee, similarly to how it would be when not unit tested
+    await toToken.mint(DCAPositionHandler.address, toToken.asUnits(amount * ratePerUnit));
     await DCAPositionHandler.setInternalBalances(
       await tokenA.balanceOf(DCAPositionHandler.address),
       await tokenB.balanceOf(DCAPositionHandler.address)
