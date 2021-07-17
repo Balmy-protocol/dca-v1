@@ -10,7 +10,7 @@ import { TokenContract } from '../../utils/erc20';
 const WITH_FEE = (bn: BigNumber) => bn.add(CALCULATE_FEE(bn));
 const CALCULATE_FEE = (bn: BigNumber) => bn.mul(1).div(1000);
 
-describe.only('DCAPairLoanHandler', () => {
+describe('DCAPairLoanHandler', () => {
   let owner: SignerWithAddress;
   let feeRecipient: SignerWithAddress;
   let tokenA: TokenContract, tokenB: TokenContract;
