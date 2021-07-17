@@ -557,14 +557,14 @@ describe('DCAPairSwapHandler', () => {
       then('rate of unit b to a is correct', async () => {
         bn.expectToEqualWithThreshold({
           value: nextSwapInfo.ratePerUnitBToA,
-          to: APPLY_FEE(ratePerUnitBToA as BigNumber),
+          to: ratePerUnitBToA,
           threshold: threshold!,
         });
       });
       then('rate of unit a to b is correct', () => {
         bn.expectToEqualWithThreshold({
           value: nextSwapInfo.ratePerUnitAToB,
-          to: APPLY_FEE(ratePerUnitAToB as BigNumber),
+          to: ratePerUnitAToB,
           threshold: threshold!,
         });
       });
@@ -1347,10 +1347,12 @@ describe('DCAPairSwapHandler', () => {
         const to = await readArgFromEvent(tx, 'Swapped', '_to');
         const amountBorrowedTokenA = await readArgFromEvent(tx, 'Swapped', '_amountBorrowedTokenA');
         const amountBorrowedTokenB = await readArgFromEvent(tx, 'Swapped', '_amountBorrowedTokenB');
+        const fee = await readArgFromEvent(tx, 'Swapped', '_fee');
         expect(sender).to.equal(owner.address);
         expect(to).to.equal(DCAPairSwapCallee.address);
         expect(amountBorrowedTokenA).to.equal(availableToBorrowTokenA);
         expect(amountBorrowedTokenB).to.equal(availableToBorrowTokenB);
+        expect(fee).to.equal(3000);
       });
 
       then('active swap intervals remain the same', async () => {
@@ -1786,12 +1788,12 @@ describe('DCAPairSwapHandler', () => {
         expect(nextSwapInformation.amountOfSwaps).to.equal(parsedNextSwaps.amount);
         bn.expectToEqualWithThreshold({
           value: nextSwapInformation.ratePerUnitBToA,
-          to: APPLY_FEE(ratePerUnitBToA as BigNumber),
+          to: ratePerUnitBToA,
           threshold: threshold!,
         });
         bn.expectToEqualWithThreshold({
           value: nextSwapInformation.ratePerUnitAToB,
-          to: APPLY_FEE(ratePerUnitAToB as BigNumber),
+          to: ratePerUnitAToB,
           threshold: threshold!,
         });
         bn.expectToEqualWithThreshold({
@@ -1825,10 +1827,12 @@ describe('DCAPairSwapHandler', () => {
         const to = await readArgFromEvent(swapTx, 'Swapped', '_to');
         const amountBorrowedTokenA = await readArgFromEvent(swapTx, 'Swapped', '_amountBorrowedTokenA');
         const amountBorrowedTokenB = await readArgFromEvent(swapTx, 'Swapped', '_amountBorrowedTokenB');
+        const fee = await readArgFromEvent(swapTx, 'Swapped', '_fee');
         expect(sender).to.equal(owner.address);
         expect(to).to.equal(owner.address);
         expect(amountBorrowedTokenA).to.equal(constants.ZERO);
         expect(amountBorrowedTokenB).to.equal(constants.ZERO);
+        expect(fee).to.equal(3000);
       });
 
       then('active swap intervals remain the same', async () => {

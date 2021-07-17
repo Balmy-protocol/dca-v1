@@ -148,10 +148,6 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
       _nextSwapInformation.availableToBorrowTokenA = _balances[address(tokenA)];
       _nextSwapInformation.availableToBorrowTokenB = _balances[address(tokenB)];
     }
-
-    // We extract the fee from the rate per units, so that we don't need to calculate it later
-    _nextSwapInformation.ratePerUnitBToA -= _getFeeFromAmount(_swapFee, _nextSwapInformation.ratePerUnitBToA);
-    _nextSwapInformation.ratePerUnitAToB -= _getFeeFromAmount(_swapFee, _nextSwapInformation.ratePerUnitAToB);
   }
 
   function swap() external override {
@@ -178,14 +174,14 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
           _swapInterval,
           address(tokenA),
           _nextSwapInformation.swapsToPerform[i].amountToSwapTokenA,
-          _nextSwapInformation.ratePerUnitAToB,
+          _nextSwapInformation.ratePerUnitAToB - _getFeeFromAmount(_swapParameters.swapFee, _nextSwapInformation.ratePerUnitAToB),
           _swapToPerform
         );
         _registerSwap(
           _swapInterval,
           address(tokenB),
           _nextSwapInformation.swapsToPerform[i].amountToSwapTokenB,
-          _nextSwapInformation.ratePerUnitBToA,
+          _nextSwapInformation.ratePerUnitBToA - _getFeeFromAmount(_swapParameters.swapFee, _nextSwapInformation.ratePerUnitBToA),
           _swapToPerform
         );
         performedSwaps[_swapInterval] = _swapToPerform;
@@ -254,7 +250,7 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
     tokenB.safeTransfer(_swapParameters.feeRecipient, _balanceTokenB - _finalAmountToHaveTokenB);
 
     // Emit event
-    emit Swapped(msg.sender, _to, _amountToBorrowTokenA, _amountToBorrowTokenB, _nextSwapInformation);
+    emit Swapped(msg.sender, _to, _amountToBorrowTokenA, _amountToBorrowTokenB, _swapParameters.swapFee, _nextSwapInformation);
   }
 
   function _getTimestamp() internal view virtual returns (uint32 _blockTimestamp) {
