@@ -18,7 +18,7 @@ interface IDCAPairParameters {
     uint32
   ) external view returns (int256);
 
-  function activeSwapIntervals() external view returns (uint32[] memory);
+  function isSwapIntervalActive(uint32) external view returns (bool);
 
   function performedSwaps(uint32) external view returns (uint32);
 }
@@ -148,11 +148,13 @@ interface IDCAPairLoanHandler {
 
   error ZeroLoan();
 
+  function availableToBorrow() external view returns (uint256 _amountToBorrowTokenA, uint256 _amountToBorrowTokenB);
+
   function loan(
     uint256 _amountToBorrowTokenA,
     uint256 _amountToBorrowTokenB,
     address _to,
-    bytes memory _data
+    bytes calldata _data
   ) external;
 }
 
