@@ -21,7 +21,7 @@ contract('DCAPair', () => {
     let tokenA: TokenContract, tokenB: TokenContract;
     let DCAPairFactory: ContractFactory, DCAPair: Contract;
     let DCAGlobalParametersFactory: ContractFactory, DCAGlobalParameters: Contract;
-    let TimeWeightedOracleFactory: ContractFactory, TimeWeightedOracle: Contract;
+    let timeWeightedOracleFactory: ContractFactory, timeWeightedOracle: Contract;
     let DCAPairSwapCalleeFactory: ContractFactory, DCAPairSwapCallee: Contract;
     let DCAPairLoanCalleeFactory: ContractFactory, DCAPairLoanCallee: Contract;
 
@@ -33,7 +33,7 @@ contract('DCAPair', () => {
       [governor, feeRecipient, swapper1, john, lucy, sarah] = await ethers.getSigners();
       DCAGlobalParametersFactory = await ethers.getContractFactory('contracts/DCAGlobalParameters/DCAGlobalParameters.sol:DCAGlobalParameters');
       DCAPairFactory = await ethers.getContractFactory('contracts/DCAPair/DCAPair.sol:DCAPair');
-      TimeWeightedOracleFactory = await ethers.getContractFactory('contracts/mocks/DCAPair/TimeWeightedOracleMock.sol:TimeWeightedOracleMock');
+      timeWeightedOracleFactory = await ethers.getContractFactory('contracts/mocks/DCAPair/TimeWeightedOracleMock.sol:TimeWeightedOracleMock');
       DCAPairSwapCalleeFactory = await ethers.getContractFactory('contracts/mocks/DCAPairSwapCallee.sol:DCAPairSwapCalleeMock');
       DCAPairLoanCalleeFactory = await ethers.getContractFactory('contracts/mocks/DCAPairLoanCallee.sol:DCAPairLoanCalleeMock');
     });
@@ -51,14 +51,14 @@ contract('DCAPair', () => {
         decimals: 16,
       });
 
-      TimeWeightedOracle = await TimeWeightedOracleFactory.deploy(0, 0);
+      timeWeightedOracle = await timeWeightedOracleFactory.deploy(0, 0);
       await setSwapRatio(swapRatio1);
       DCAGlobalParameters = await DCAGlobalParametersFactory.deploy(
         governor.address,
         governor.address,
         feeRecipient.address,
         constants.NOT_ZERO_ADDRESS,
-        TimeWeightedOracle.address
+        timeWeightedOracle.address
       );
       DCAPair = await DCAPairFactory.deploy(DCAGlobalParameters.address, tokenA.address, tokenB.address);
       await DCAGlobalParameters.addSwapIntervalsToAllowedList([SWAP_INTERVAL_10_MINUTES, SWAP_INTERVAL_1_HOUR], ['10 minutes', '1 hour']);
@@ -298,7 +298,7 @@ contract('DCAPair', () => {
     }
 
     async function setSwapRatio(ratio: SwapRatio) {
-      await TimeWeightedOracle.setRate(tokenA.asUnits(ratio.tokenA / ratio.tokenB), tokenB.amountOfDecimals);
+      await timeWeightedOracle.setRate(tokenA.asUnits(ratio.tokenA / ratio.tokenB), tokenB.amountOfDecimals);
     }
 
     async function withdraw(position: UserPositionDefinition): Promise<void> {
