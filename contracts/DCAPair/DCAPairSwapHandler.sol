@@ -131,8 +131,7 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
       _nextSwapInformation.tokenToBeProvidedBySwapper = tokenB;
       _nextSwapInformation.tokenToRewardSwapperWith = tokenA;
       uint256 _tokenASurplus = _amountToSwapTokenA - _amountOfTokenAIfTokenBSwapped;
-      uint256 _needed = _convertTo(_magnitudeA, _tokenASurplus, _ratePerUnitAToBWithFee);
-      _nextSwapInformation.amountToBeProvidedBySwapper = _needed;
+      _nextSwapInformation.amountToBeProvidedBySwapper = _convertTo(_magnitudeA, _tokenASurplus, _ratePerUnitAToBWithFee);
       _nextSwapInformation.amountToRewardSwapperWith = _tokenASurplus;
       _nextSwapInformation.platformFeeTokenA = _getFeeFromAmount(_swapFee, _amountOfTokenAIfTokenBSwapped);
       _nextSwapInformation.platformFeeTokenB = _getFeeFromAmount(_swapFee, _amountToSwapTokenB);
@@ -143,8 +142,7 @@ abstract contract DCAPairSwapHandler is ReentrancyGuard, DCAPairParameters, IDCA
       _nextSwapInformation.tokenToRewardSwapperWith = tokenB;
       uint256 _amountOfTokenBIfTokenASwapped = (_amountToSwapTokenA * _magnitudeB) / _nextSwapInformation.ratePerUnitBToA;
       uint256 _tokenBSurplus = _amountToSwapTokenB - _amountOfTokenBIfTokenASwapped;
-      uint256 _needed = _convertTo(_magnitudeB, _tokenBSurplus, _ratePerUnitBToAWithFee);
-      _nextSwapInformation.amountToBeProvidedBySwapper = _needed;
+      _nextSwapInformation.amountToBeProvidedBySwapper = _convertTo(_magnitudeB, _tokenBSurplus, _ratePerUnitBToAWithFee);
       _nextSwapInformation.amountToRewardSwapperWith = _tokenBSurplus;
       _nextSwapInformation.platformFeeTokenA = _getFeeFromAmount(_swapFee, _amountToSwapTokenA);
       _nextSwapInformation.platformFeeTokenB = _getFeeFromAmount(_swapFee, _amountOfTokenBIfTokenASwapped);
