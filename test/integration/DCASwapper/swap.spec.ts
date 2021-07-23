@@ -112,8 +112,9 @@ contract('DCASwapper', () => {
       given(async () => {
         await pushPriceOfWETHDown();
       });
-      then.only('get pairs to swap returns empty', async () => {
-        const pairs = await DCASwapper.getPairsToSwap();
+      then('get pairs to swap returns empty', async () => {
+        const pairs = await DCASwapper.callStatic.getPairsToSwap();
+
         expect(pairs).to.be.empty;
       });
       then('swap gets reverted', async () => {
@@ -122,7 +123,7 @@ contract('DCASwapper', () => {
       });
     });
 
-    when('twap price < uni price => allows for profitable swap', () => {
+    when.only('twap price < uni price => allows for profitable swap', () => {
       let twapPrice: BigNumber;
       let currentUniswapPrice: BigNumber;
       let amountOfETHNeededToGetUSDC: BigNumber;
@@ -146,23 +147,32 @@ contract('DCASwapper', () => {
           },
           { gasPrice: 0 }
         );
-        await DCASwapper.connect(governor).swapPairs([DCAPair.address], { gasPrice: 0 });
       });
-      then('swap is executed', async () => {
-        expect(await DCAPair.performedSwaps(INTERVAL)).to.equal(1);
+      then('get pairs to swap returns empty', async () => {
+        const pairs = await DCASwapper.callStatic.getPairsToSwap();
+
+        expect(pairs).to.equals([DCAPair.address]);
       });
-      then('pair balance is correct', async () => {
-        expect(await WETH.balanceOf(DCAPair.address)).to.equal(RATE.mul(AMOUNT_OF_SWAPS - 1));
-        expect(await USDC.balanceOf(DCAPair.address)).to.be.gte(APPLY_FEE(twapPrice));
-      });
-      then('fee + change is sent to fee recipient', async () => {
-        const feeToGet = RATE.sub(amountOfETHNeededToGetUSDC);
-        bn.expectToEqualWithThreshold({
-          value: await WETH.balanceOf(feeRecipient),
-          to: feeToGet,
-          threshold: feeToGet.div(100), // 1%
+      describe('swap', () => {
+        given(async () => {
+          await DCASwapper.connect(governor).swapPairs([DCAPair.address], { gasPrice: 0 });
         });
-        expect(await USDC.balanceOf(feeRecipient)).to.equal(0);
+        then('swap is executed', async () => {
+          expect(await DCAPair.performedSwaps(INTERVAL)).to.equal(1);
+        });
+        then('pair balance is correct', async () => {
+          expect(await WETH.balanceOf(DCAPair.address)).to.equal(RATE.mul(AMOUNT_OF_SWAPS - 1));
+          expect(await USDC.balanceOf(DCAPair.address)).to.be.gte(APPLY_FEE(twapPrice));
+        });
+        then('fee + change is sent to fee recipient', async () => {
+          const feeToGet = RATE.sub(amountOfETHNeededToGetUSDC);
+          bn.expectToEqualWithThreshold({
+            value: await WETH.balanceOf(feeRecipient),
+            to: feeToGet,
+            threshold: feeToGet.div(100), // 1%
+          });
+          expect(await USDC.balanceOf(feeRecipient)).to.equal(0);
+        });
       });
     });
   });
