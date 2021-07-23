@@ -109,12 +109,15 @@ contract('DCASwapper', () => {
     });
 
     when(`twap doesn't allow for profitable swap`, () => {
-      let swapPairsTx: Promise<TransactionResponse>;
       given(async () => {
         await pushPriceOfWETHDown();
-        swapPairsTx = DCASwapper.connect(governor).swapPairs([DCAPair.address], { gasPrice: 0 });
       });
-      then('tx gets reverted', async () => {
+      then.only('get pairs to swap returns empty', async () => {
+        const pairs = await DCASwapper.getPairsToSwap();
+        expect(pairs).to.be.empty;
+      });
+      then('swap gets reverted', async () => {
+        const swapPairsTx = DCASwapper.connect(governor).swapPairs([DCAPair.address], { gasPrice: 0 });
         await expect(swapPairsTx).to.be.reverted;
       });
     });
