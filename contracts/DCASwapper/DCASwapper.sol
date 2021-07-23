@@ -119,7 +119,13 @@ contract DCASwapper is IDCASwapper, Governable, IDCAPairSwapCallee {
         sqrtPriceLimitX96: 0
       });
 
+      TransferHelper.safeApprove(
+        address(_nextSwapInformation.tokenToRewardSwapperWith),
+        address(quoter),
+        _nextSwapInformation.amountToBeProvidedBySwapper
+      );
       (uint256 _inputNecessary, , , ) = quoter.quoteExactOutputSingle(_params);
+      TransferHelper.safeApprove(address(_nextSwapInformation.tokenToRewardSwapperWith), address(quoter), 0);
       return _nextSwapInformation.amountToRewardSwapperWith >= _inputNecessary;
     }
   }
