@@ -124,7 +124,7 @@ contract('DCASwapper', () => {
       });
     });
 
-    when.only('twap price < uni price => allows for profitable swap', () => {
+    when('twap price < uni price => allows for profitable swap', () => {
       let twapPrice: BigNumber;
       let currentUniswapPrice: BigNumber;
       let amountOfETHNeededToGetUSDC: BigNumber;
