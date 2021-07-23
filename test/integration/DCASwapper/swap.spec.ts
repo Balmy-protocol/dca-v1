@@ -5,6 +5,7 @@ import { BigNumber, Contract, utils } from 'ethers';
 import { deployments, ethers, getNamedAccounts } from 'hardhat';
 import { abi as IERC20_ABI } from '@openzeppelin/contracts/build/contracts/IERC20.json';
 import { abi as SWAP_ROUTER_ABI } from '@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json';
+import { abi as QUOTER_ABI } from '@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json';
 import { getNodeUrl } from '../../../utils/network';
 import { bn, constants, evm, wallet } from '../../utils';
 import { contract, given, then, when } from '../../utils/bdd';
@@ -148,10 +149,9 @@ contract('DCASwapper', () => {
           { gasPrice: 0 }
         );
       });
-      then('get pairs to swap returns empty', async () => {
-        const pairs = await DCASwapper.callStatic.getPairsToSwap();
-
-        expect(pairs).to.equals([DCAPair.address]);
+      then('pair can be swapped', async () => {
+        const pairs = await DCASwapper.callStatic.getPairsToSwap({ gasPrice: 0 });
+        expect(pairs).to.eql([DCAPair.address]);
       });
       describe('swap', () => {
         given(async () => {
