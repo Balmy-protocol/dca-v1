@@ -116,9 +116,10 @@ contract('DCASwapper', () => {
         await pushPriceOfWETHDown(10000);
       });
       then('get pairs to swap returns empty', async () => {
-        const pairs = await DCASwapper.callStatic.getPairsToSwap();
+        const [pairs, feeTiers] = await DCASwapper.callStatic.getPairsToSwap();
 
         expect(pairs).to.be.empty;
+        expect(feeTiers).to.be.empty;
       });
       then('swap gets reverted', async () => {
         const swapPairsTx = DCASwapper.connect(governor).swapPairs([DCAPair.address], { gasPrice: 0 });
@@ -152,8 +153,9 @@ contract('DCASwapper', () => {
         );
       });
       then('pair can be swapped', async () => {
-        const pairs = await DCASwapper.callStatic.getPairsToSwap({ gasPrice: 0 });
+        const [pairs, feeTiers] = await DCASwapper.callStatic.getPairsToSwap({ gasPrice: 0 });
         expect(pairs).to.eql([DCAPair.address]);
+        expect(feeTiers).to.eql([3000]);
       });
       describe('swap', () => {
         given(async () => {

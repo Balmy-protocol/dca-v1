@@ -411,32 +411,35 @@ describe('DCASwapper', () => {
 
     when('there are no pairs being watched', () => {
       then('empty list is returned', async () => {
-        const pairsToSwap = await DCASwapper.callStatic.getPairsToSwap();
+        const [pairsToSwap, feeTiers] = await DCASwapper.callStatic.getPairsToSwap();
         expect(pairsToSwap).to.be.empty;
+        expect(feeTiers).to.be.empty;
       });
     });
 
     when('pairs being watched should not be swaped', () => {
       given(async () => {
         await DCASwapper.startWatchingPairs([ADDRESS_1, ADDRESS_2]);
-        await DCASwapper.setPairsToSwap([]);
+        await DCASwapper.setPairsToSwap([], []);
       });
 
       then('empty list is returned', async () => {
-        const pairsToSwap = await DCASwapper.callStatic.getPairsToSwap();
+        const [pairsToSwap, feeTiers] = await DCASwapper.callStatic.getPairsToSwap();
         expect(pairsToSwap).to.be.empty;
+        expect(feeTiers).to.be.empty;
       });
     });
 
     when('some of the pairs being watched should be swapped', () => {
       given(async () => {
         await DCASwapper.startWatchingPairs([ADDRESS_1, ADDRESS_2, ADDRESS_3]);
-        await DCASwapper.setPairsToSwap([ADDRESS_1, ADDRESS_3]);
+        await DCASwapper.setPairsToSwap([ADDRESS_1, ADDRESS_3], [3000, 10000]);
       });
 
       then('then they are returned', async () => {
-        const pairsToSwap = await DCASwapper.callStatic.getPairsToSwap();
+        const [pairsToSwap, feeTiers] = await DCASwapper.callStatic.getPairsToSwap();
         expect(pairsToSwap).to.eql([ADDRESS_3, ADDRESS_1]);
+        expect(feeTiers).to.eql([10000, 3000]);
       });
     });
   });
