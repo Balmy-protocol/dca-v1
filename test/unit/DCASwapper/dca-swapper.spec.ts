@@ -525,7 +525,7 @@ describe('DCASwapper', () => {
     });
   });
   describe('die', () => {
-    when.only('die is called', () => {
+    when('die is called', () => {
       given(async () => {
         await DCASwapper.die(ADDRESS_1);
       });
