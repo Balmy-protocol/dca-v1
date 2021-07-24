@@ -29,7 +29,7 @@ interface IDCASwapper {
    * This method isn't a view and it is extremelly expensive and inefficient.
    * DO NOT call this method on-chain, it is for off-chain purposes only.
    */
-  function getPairsToSwap() external returns (IDCAPair[] memory);
+  function getPairsToSwap() external returns (IDCAPair[] memory _pairs, uint24[] memory _bestFeeTiers);
 
   /* Public setters */
   function startWatchingPairs(address[] calldata) external;

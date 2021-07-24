@@ -59,7 +59,7 @@ contract DCASwapper is IDCASwapper, Governable, IDCAPairSwapCallee {
    * This method isn't a view and it is extremelly expensive and inefficient.
    * DO NOT call this method on-chain, it is for off-chain purposes only.
    */
-  function getPairsToSwap() external override returns (IDCAPair[] memory _pairs) {
+  function getPairsToSwap() external override returns (IDCAPair[] memory _pairs, uint24[] memory _bestFeeTiers) {
     uint256 _count;
 
     // Count how many pairs can be swapped
@@ -72,6 +72,7 @@ contract DCASwapper is IDCASwapper, Governable, IDCAPairSwapCallee {
 
     // Create result array with correct size
     _pairs = new IDCAPair[](_count);
+    _bestFeeTiers = new uint24[](_count);
 
     // Fill result array
     for (uint256 i; i < _length; i++) {
@@ -79,6 +80,7 @@ contract DCASwapper is IDCASwapper, Governable, IDCAPairSwapCallee {
       uint24 _feeTier = _bestFeeTierForSwap(_pair);
       if (_feeTier > 0) {
         _pairs[--_count] = _pair;
+        _bestFeeTiers[_count] = _feeTier;
       }
     }
   }
