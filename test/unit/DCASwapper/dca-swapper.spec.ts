@@ -411,9 +411,8 @@ describe('DCASwapper', () => {
 
     when('there are no pairs being watched', () => {
       then('empty list is returned', async () => {
-        const [pairsToSwap, feeTiers] = await DCASwapper.callStatic.getPairsToSwap();
+        const pairsToSwap = await DCASwapper.callStatic.getPairsToSwap();
         expect(pairsToSwap).to.be.empty;
-        expect(feeTiers).to.be.empty;
       });
     });
 
@@ -424,9 +423,7 @@ describe('DCASwapper', () => {
       });
 
       then('empty list is returned', async () => {
-        const [pairsToSwap, feeTiers] = await DCASwapper.callStatic.getPairsToSwap();
-        expect(pairsToSwap).to.be.empty;
-        expect(feeTiers).to.be.empty;
+        const pairsToSwap = await DCASwapper.callStatic.getPairsToSwap();
       });
     });
 
@@ -437,9 +434,9 @@ describe('DCASwapper', () => {
       });
 
       then('then they are returned', async () => {
-        const [pairsToSwap, feeTiers] = await DCASwapper.callStatic.getPairsToSwap();
-        expect(pairsToSwap).to.eql([ADDRESS_3, ADDRESS_1]);
-        expect(feeTiers).to.eql([10000, 3000]);
+        const pairsToSwap: { pair: string; bestFeeTier: number }[] = await DCASwapper.callStatic.getPairsToSwap();
+        expect(pairsToSwap.map(({ pair }) => pair)).to.eql([ADDRESS_3, ADDRESS_1]);
+        expect(pairsToSwap.map(({ bestFeeTier }) => bestFeeTier)).to.eql([10000, 3000]);
       });
     });
   });
