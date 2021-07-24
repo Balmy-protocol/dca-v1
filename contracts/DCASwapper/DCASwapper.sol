@@ -83,14 +83,14 @@ contract DCASwapper is IDCASwapper, Governable, IDCAPairSwapCallee {
     }
   }
 
-  function swapPairs(IDCAPair[] calldata _pairsToSwap, uint24[] calldata _bestFeeTiers) external override returns (uint256 _amountSwapped) {
+  function swapPairs(PairToSwap[] calldata _pairsToSwap) external override returns (uint256 _amountSwapped) {
     if (_pairsToSwap.length == 0) revert ZeroPairsToSwap();
 
     uint256 _maxGasSpent;
 
     do {
       uint256 _gasLeftStart = gasleft();
-      _swap(_pairsToSwap[_amountSwapped], _bestFeeTiers[_amountSwapped++]);
+      _swap(_pairsToSwap[_amountSwapped++]);
       uint256 _gasSpent = _gasLeftStart - gasleft();
 
       // Update max gas spent if necessary
@@ -141,9 +141,9 @@ contract DCASwapper is IDCASwapper, Governable, IDCAPairSwapCallee {
     }
   }
 
-  function _swap(IDCAPair _pair, uint24 _bestFeeTier) internal {
+  function _swap(PairToSwap memory _pair) internal {
     // Execute the swap, making myself the callee so that the `DCAPairSwapCall` function is called
-    _pair.swap(0, 0, address(this), abi.encode(_bestFeeTier));
+    _pair.pair.swap(0, 0, address(this), abi.encode(_pair.bestFeeTier));
   }
 
   // solhint-disable-next-line func-name-mixedcase
