@@ -58,7 +58,7 @@ contract('DCASwapper', () => {
 
     uniswapSwapRouter = await ethers.getContractAt(SWAP_ROUTER_ABI, UNISWAP_SWAP_ROUTER_ADDRESS);
 
-    await deployments.fixture('Swapper');
+    await deployments.fixture(['Factory', 'Swapper']);
 
     const namedAccounts = await getNamedAccounts();
     feeRecipient = namedAccounts.feeRecipient;
