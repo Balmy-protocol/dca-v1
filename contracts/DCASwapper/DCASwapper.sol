@@ -64,7 +64,7 @@ contract DCASwapper is IDCASwapper, Governable, IDCAPairSwapCallee, CollectableD
    * Therefore, we highly recommend that this method is not called on-chain.
    * This method will return 0 if the pair should not be swapped, and max(uint24) if there is no need to go to Uniswap
    */
-  function bestFeeTierForSwap(IDCAPair _pair) public virtual override returns (uint24 _feeTier) {
+  function bestFeeTierForSwap(IDCAPair _pair) external override returns (uint24 _feeTier) {
     IDCAPairSwapHandler.NextSwapInformation memory _nextSwapInformation = _pair.getNextSwapInfo();
     if (_nextSwapInformation.amountOfSwaps == 0) {
       return 0;
