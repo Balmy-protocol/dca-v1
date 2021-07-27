@@ -86,10 +86,6 @@ contract('DCASwapper', () => {
   });
 
   describe('swap', () => {
-    given(async () => {
-      await DCASwapper.startWatchingPairs([DCAPair.address]);
-    });
-
     when('pair doesnt need external liquidity', () => {
       let usdcNeeded: BigNumber;
       given(async () => {
