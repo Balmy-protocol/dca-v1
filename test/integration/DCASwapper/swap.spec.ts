@@ -25,7 +25,7 @@ const UNISWAP_SWAP_ROUTER_ADDRESS = '0xE592427A0AEce92De3Edee1F18E0157C05861564'
 const CALCULATE_FEE = (bn: BigNumber) => bn.mul(3).div(1000);
 const APPLY_FEE = (bn: BigNumber) => bn.sub(CALCULATE_FEE(bn));
 
-contract('DCASwapper', () => {
+contract.only('DCASwapper', () => {
   let DCASwapper: Contract;
   let DCAFactory: Contract;
   let DCAPair: Contract;
@@ -97,7 +97,7 @@ contract('DCASwapper', () => {
         const bestFeeTier = await DCASwapper.callStatic.bestFeeTierForSwap(DCAPair.address);
 
         expect(bestFeeTier).to.equal(BigNumber.from(2).pow(24).sub(1));
-      });
+      }).retries(5);
       describe('swap', () => {
         given(async () => {
           await DCASwapper.swapPairs([[DCAPair.address, 3000]]);
