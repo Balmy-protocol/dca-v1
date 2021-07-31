@@ -184,9 +184,10 @@ interface IDCAPairLoanHandler {
   function availableToBorrow() external view returns (uint256 _amountToBorrowTokenA, uint256 _amountToBorrowTokenB);
 
   /// @notice Executes a flash loan, sending the required amounts to the specified loan recipient
-  /// @dev Will revert with ZeroLoan if both _amountToBorrowTokenA & _amountToBorrowTokenB are 0
-  /// @dev Will revert with Paused if loans are paused by protocol
-  /// @dev Will revert with InsufficientLiquidity if asked for more that reserves
+  /// @dev Will revert:
+  /// With ZeroLoan if both _amountToBorrowTokenA & _amountToBorrowTokenB are 0
+  /// With Paused if loans are paused by protocol
+  /// With InsufficientLiquidity if asked for more that reserves
   /// @param _amountToBorrowTokenA The amount to borrow in token A
   /// @param _amountToBorrowTokenB The amount to borrow in token B
   /// @param _to Address that will receive the loan. This address should be a contract that implements IDCAPairLoanCallee
