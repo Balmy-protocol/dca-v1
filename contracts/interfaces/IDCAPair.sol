@@ -49,11 +49,11 @@ interface IDCAPairParameters {
 interface IDCAPairPositionHandler is IDCAPairParameters {
   /// @notice The position of a certain user
   struct UserPosition {
-    // The token that the user deposited and will be used
+    // The token that the user deposited and will be swapped in exchange for "to"
     IERC20Detailed from;
-    // The token that the user will get in exchange for their "to" tokens in each swap
+    // The token that the user will get in exchange for their "from" tokens in each swap
     IERC20Detailed to;
-    // How frequent the position's swaps should be executed
+    // How frequently the position's swaps should be executed
     uint32 swapInterval;
     // How many swaps were executed since deposit, last modification, or last withdraw
     uint32 swapsExecuted;
@@ -70,8 +70,8 @@ interface IDCAPairPositionHandler is IDCAPairParameters {
   /// @notice Emitted when a position is terminated
   /// @param _user The address of the user that terminated the position
   /// @param _dcaId The id of the position that was terminated
-  /// @param _returnedUnswapped How token "from" was returned to the caller
-  /// @param _returnedSwapped How token "to" was returned to the caller
+  /// @param _returnedUnswapped How many "from" tokens were returned to the caller
+  /// @param _returnedSwapped How many "to" tokens were returned to the caller
   event Terminated(address indexed _user, uint256 _dcaId, uint256 _returnedUnswapped, uint256 _returnedSwapped);
 
   /// @notice Emitted when a position is created
@@ -79,8 +79,8 @@ interface IDCAPairPositionHandler is IDCAPairParameters {
   /// @param _dcaId The id of the position that was created
   /// @param _fromToken The address of the "from" token
   /// @param _rate How many "from" tokens need to be traded in each swap
-  /// @param _startingSwap The number of the swap when the position will first be executed
-  /// @param _swapInterval How frequent the position's swaps should be executed
+  /// @param _startingSwap The number of the swap when the position will be executed for the first time
+  /// @param _swapInterval How frequently the position's swaps should be executed
   /// @param _lastSwap The number of the swap when the position will be executed for the last time
   event Deposited(
     address indexed _user,
@@ -102,15 +102,15 @@ interface IDCAPairPositionHandler is IDCAPairParameters {
   /// @notice Emitted when a user withdraws all swapped tokens from many positions
   /// @param _user The address of the user that executed the withdraw
   /// @param _dcaIds The ids of the positions that were affected
-  /// @param _swappedTokenA The amount that was withdrawn in token A
-  /// @param _swappedTokenB The amount that was withdrawn in token B
+  /// @param _swappedTokenA The total amount that was withdrawn in token A
+  /// @param _swappedTokenB The total amount that was withdrawn in token B
   event WithdrewMany(address indexed _user, uint256[] _dcaIds, uint256 _swappedTokenA, uint256 _swappedTokenB);
 
   /// @notice Emitted when a position is modified
   /// @param _user The address of the user that modified the position
   /// @param _dcaId The id of the position that was modified
   /// @param _rate How many "from" tokens need to be traded in each swap
-  /// @param _startingSwap The number of the swap when the position will first be executed
+  /// @param _startingSwap The number of the swap when the position will be executed for the first time
   /// @param _lastSwap The number of the swap when the position will be executed for the last time
   event Modified(address indexed _user, uint256 _dcaId, uint160 _rate, uint32 _startingSwap, uint32 _lastSwap);
 
@@ -139,7 +139,7 @@ interface IDCAPairPositionHandler is IDCAPairParameters {
   error PositionCompleted();
 
   /// @notice Thrown when a user tries to modify a position that has too much swapped balance. This error
-  /// is thrown so that the user doesn't lose any funds. The error indicated that the user must perform a withdraw
+  /// is thrown so that the user doesn't lose any funds. The error indicates that the user must perform a withdraw
   /// before modifying their position
   error MandatoryWithdraw();
 
@@ -157,8 +157,8 @@ interface IDCAPairPositionHandler is IDCAPairParameters {
   /// @param _tokenAddress The address of the token that will be deposited
   /// @param _rate How many "from" tokens need to be traded in each swap
   /// @param _amountOfSwaps How many swaps to execute for this position
-  /// @param _swapInterval How frequent the position's swaps should be executed
-  /// @return _dcaId The position id of the created position
+  /// @param _swapInterval How frequently the position's swaps should be executed
+  /// @return _dcaId The id of the created position
   function deposit(
     address _tokenAddress,
     uint160 _rate,
@@ -183,7 +183,7 @@ interface IDCAPairPositionHandler is IDCAPairParameters {
   /// @return _swappedTokenB How much was withdrawn in token B
   function withdrawSwappedMany(uint256[] calldata _dcaIds) external returns (uint256 _swappedTokenA, uint256 _swappedTokenB);
 
-  /// @notice Modifies the rate of a position. Could ask request more funds or return deposited funds
+  /// @notice Modifies the rate of a position. Could request more funds or return deposited funds
   /// depending on whether the new rate is greater than the previous one.
   /// @dev Will revert:
   /// With InvalidPosition if _dcaId is invalid
@@ -195,7 +195,7 @@ interface IDCAPairPositionHandler is IDCAPairParameters {
   /// @param _newRate The new rate to set
   function modifyRate(uint256 _dcaId, uint160 _newRate) external;
 
-  /// @notice Modifies the amount of swaps of a position. Could ask request more funds or return
+  /// @notice Modifies the amount of swaps of a position. Could request more funds or return
   /// deposited funds depending on whether the new amount of swaps is greater than the swaps left.
   /// @dev Will revert:
   /// With InvalidPosition if _dcaId is invalid
@@ -205,8 +205,8 @@ interface IDCAPairPositionHandler is IDCAPairParameters {
   /// @param _newSwaps The new amount of swaps
   function modifySwaps(uint256 _dcaId, uint32 _newSwaps) external;
 
-  /// @notice Modifies the both the rate and amount of swaps of a position. Could ask request more funds or return
-  /// deposited funds depending on whether the new parameters require more or less of the unswapped funds.
+  /// @notice Modifies the both the rate and amount of swaps of a position. Could request more funds or return
+  /// deposited funds depending on whether the new parameters require more or less than the the unswapped funds.
   /// @dev Will revert:
   /// With InvalidPosition if _dcaId is invalid
   /// With UnauthorizedCaller if the caller doesn't have access to the position
