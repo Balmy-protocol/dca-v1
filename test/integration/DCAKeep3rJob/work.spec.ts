@@ -155,8 +155,4 @@ contract('DCAKeep3rJob', () => {
     const currentPrice = await uniswapSwapRouter.connect(wethWhale).callStatic.exactInput(currentPriceParams, { gasPrice: 0 });
     return currentPrice;
   }
-
-  function encodeFeeTier(feeTier: number) {
-    return ethers.utils.defaultAbiCoder.encode(['uint24'], [feeTier]);
-  }
 });
