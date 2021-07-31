@@ -8,7 +8,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signers';
 import erc20, { TokenContract } from '../../utils/erc20';
 import { readArgFromEvent } from '../../utils/event-utils';
 
-describe('DCASwapper', () => {
+describe('DCAUniswapV3Swapper', () => {
   const ADDRESS_1 = '0x0000000000000000000000000000000000000001';
   const ADDRESS_2 = '0x0000000000000000000000000000000000000002';
 
@@ -21,7 +21,7 @@ describe('DCASwapper', () => {
 
   before('Setup accounts and contracts', async () => {
     [owner, swapperCaller] = await ethers.getSigners();
-    DCASwapperContract = await ethers.getContractFactory('contracts/mocks/DCASwapper/DCASwapper.sol:DCASwapperMock');
+    DCASwapperContract = await ethers.getContractFactory('contracts/mocks/DCASwapper/DCAUniswapV3Swapper.sol:DCAUniswapV3SwapperMock');
     UniswapRouterContract = await ethers.getContractFactory('contracts/mocks/DCASwapper/SwapRouterMock.sol:SwapRouterMock');
     UniswapQuoterContract = await ethers.getContractFactory('contracts/mocks/DCASwapper/QuoterMock.sol:QuoterMock');
     UniswapFactoryContract = await ethers.getContractFactory('contracts/mocks/DCASwapper/UniswapFactoryMock.sol:UniswapFactoryMock');
