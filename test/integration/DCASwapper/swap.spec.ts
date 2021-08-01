@@ -22,10 +22,10 @@ const FORK_BLOCK_NUMBER = 12851228;
 
 const UNISWAP_SWAP_ROUTER_ADDRESS = '0xE592427A0AEce92De3Edee1F18E0157C05861564';
 
-const CALCULATE_FEE = (bn: BigNumber) => bn.mul(3).div(1000);
+const CALCULATE_FEE = (bn: BigNumber) => bn.mul(6).div(1000);
 const APPLY_FEE = (bn: BigNumber) => bn.sub(CALCULATE_FEE(bn));
 
-contract('DCAUniswapV3Swapper', () => {
+contract.only('DCAUniswapV3Swapper', () => {
   let DCASwapper: Contract;
   let DCAFactory: Contract;
   let DCAPair: Contract;

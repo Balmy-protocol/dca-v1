@@ -1364,7 +1364,7 @@ describe('DCAPairSwapHandler', () => {
         expect(to).to.equal(DCAPairSwapCallee.address);
         expect(amountBorrowedTokenA).to.equal(availableToBorrowTokenA);
         expect(amountBorrowedTokenB).to.equal(availableToBorrowTokenB);
-        expect(fee).to.equal(3000);
+        expect(fee).to.equal(6000);
       });
 
       then('active swap intervals remain the same', async () => {
@@ -1845,7 +1845,7 @@ describe('DCAPairSwapHandler', () => {
         expect(to).to.equal(owner.address);
         expect(amountBorrowedTokenA).to.equal(constants.ZERO);
         expect(amountBorrowedTokenB).to.equal(constants.ZERO);
-        expect(fee).to.equal(3000);
+        expect(fee).to.equal(6000);
       });
 
       then('active swap intervals remain the same', async () => {
