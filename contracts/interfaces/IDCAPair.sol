@@ -205,7 +205,7 @@ interface IDCAPairPositionHandler is IDCAPairParameters {
   /// @param _newSwaps The new amount of swaps
   function modifySwaps(uint256 _dcaId, uint32 _newSwaps) external;
 
-  /// @notice Modifies the both the rate and amount of swaps of a position. Could request more funds or return
+  /// @notice Modifies both the rate and amount of swaps of a position. Could request more funds or return
   /// deposited funds depending on whether the new parameters require more or less than the the unswapped funds.
   /// @dev Will revert:
   /// With InvalidPosition if _dcaId is invalid
