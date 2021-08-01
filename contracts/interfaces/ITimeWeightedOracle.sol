@@ -91,6 +91,7 @@ interface IUniswapV3OracleAggregator is ITimeWeightedOracle {
 
   /// @notice Sets the period to be used for the TWAP calculation
   /// @dev Will revert it is lower than MINIMUM_PERIOD or greater than MAXIMUM_PERIOD
+  /// WARNING: increasing the period could cause big problems, because Uniswap V3 pools might not support a TWAP so old.
   /// @param _period The new period
   function setPeriod(uint16 _period) external;
 }
