@@ -9,7 +9,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signers';
 import { readArgFromEvent } from '../../utils/event-utils';
 import { TokenContract } from '../../utils/erc20';
 
-const CALCULATE_FEE = (bn: BigNumber) => bn.mul(3).div(1000);
+const CALCULATE_FEE = (bn: BigNumber) => bn.mul(6).div(1000);
 const APPLY_FEE = (bn: BigNumber) => bn.sub(CALCULATE_FEE(bn));
 
 describe('DCAPairSwapHandler', () => {
