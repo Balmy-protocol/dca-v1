@@ -6,7 +6,7 @@ import '../utils/CollectableDust.sol';
 
 /// @title The interface for a contract that can execute DCA swaps
 /// @notice This contract will take a DCA swap and execute the opposite trade in a DEX
-/// in order to return the expected founds and complete the swap
+/// in order to return the expected funds and complete the swap
 interface IDCASwapper is ICollectableDust {
   /// @notice A pair to swap
   struct PairToSwap {
@@ -18,7 +18,7 @@ interface IDCASwapper is ICollectableDust {
 
   /// @notice Emitted when a list of pairs is swapped correctly
   /// @param _pairsToSwap The list of swaps that was attempted to swap
-  /// @param _amountSwapped The amount of swaps that was actually swapped
+  /// @param _amountSwapped The amount of pairs that was actually swapped
   event Swapped(PairToSwap[] _pairsToSwap, uint256 _amountSwapped);
 
   /// @notice Emitted when trying to swap an empty list of pairs
