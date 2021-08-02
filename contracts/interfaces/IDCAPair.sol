@@ -247,7 +247,7 @@ interface IDCAPairPositionHandler is IDCAPairParameters {
 }
 
 /// @title The interface for all swap related matters in a DCA pair
-/// @notice These methods allow users to get information about the next swap, and also execute it
+/// @notice These methods allow users to get information about the next swap, and how to execute it
 interface IDCAPairSwapHandler {
   /// @notice Information about an available swap for a specific swap interval
   struct SwapInformation {
