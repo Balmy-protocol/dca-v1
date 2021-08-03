@@ -20,7 +20,7 @@ Documentations live under [docs.mean.finance](https://docs.mean.finance)
 
 ## 🛠️ Keeper Job
 
-For detailed instructions on how to execute our keep3r job go to [docs.mean.finance](https://docs.mean.finance/asd)
+For detailed instructions on how to execute our keep3r job go to [docs.mean.finance](https://docs.mean.finance/guides/keep3r-job)
 
 ## 📦 NPM/YARN Package
 
