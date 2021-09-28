@@ -5,6 +5,11 @@ import qs from 'qs';
 
 axiosRetry(axios, { retries: 3, retryDelay: axiosRetry.exponentialDelay });
 
+const API_URL: { [chainId: number]: string } = {
+  1: 'api.0x.org',
+  137: 'polygon.api.0x.org',
+};
+
 export type QuoteRequest = {
   chainId: number;
   sellToken: string;
@@ -52,12 +57,13 @@ export const quote = async (quoteRequest: QuoteRequest): Promise<QuoteResponse> 
 
   quoteRequest.excludeSources = (quoteRequest.excludeSources as string[]) ?? [];
   quoteRequest.excludeSources.push('Mesh');
+
   quoteRequest.excludeSources = quoteRequest.excludeSources.join(',');
 
   let response: any;
   try {
-    response = await axios.get(`https://api.0x.org/swap/v1/quote?${qs.stringify(quoteRequest)}`);
-  } catch (err) {
+    response = await axios.get(`https://${API_URL[quoteRequest.chainId]}/swap/v1/quote?${qs.stringify(quoteRequest)}`);
+  } catch (err: any) {
     console.log(err.response.data);
     throw new Error(`Error code: ${err.response.data.code}. Reason: ${err.response.data.reason}`);
   }
