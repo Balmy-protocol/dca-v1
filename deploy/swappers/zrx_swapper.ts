@@ -8,7 +8,7 @@ const deployFunction: DeployFunction = async function (hre: HardhatRuntimeEnviro
 
   await hre.deployments.deploy('DCAZRXSwapper', {
     contract: 'contracts/DCASwapper/DCAZRXSwapper.sol:DCAZRXSwapper',
-    from: deployer,
+    from: governor,
     args: [governor, ZRX_ADDRESS],
     log: true,
   });
